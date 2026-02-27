@@ -427,17 +427,774 @@ html, body {
 }
 
 /* ============================================================
-   SCENE: Personal Values (Room 2) — placeholder
+   SCENE: Personal Values (Room 2)
+   A bedroom with absurdly oversized everyday objects.
    ============================================================ */
 #scene-personal {
-  background: linear-gradient(180deg, #c8b8a0 0%, #b0a090 50%, #8a7a6a 100%);
+  background: linear-gradient(180deg, #c8baa8 0%, #baa898 40%, #a89888 100%);
+}
+.pv-floor {
+  position: absolute; bottom: 0; left: 0; right: 0; height: 30%;
+  background: linear-gradient(180deg, #8a7a6a, #7a6a5a);
+  border-top: 2px solid #6a5a4a;
+}
+.pv-wall-left {
+  position: absolute; left: 0; top: 0; bottom: 30%; width: 5%;
+  background: linear-gradient(90deg, #a09080, #b8a898);
+  border-right: 2px solid #8a7a6a;
+}
+.pv-wall-right {
+  position: absolute; right: 0; top: 0; bottom: 30%; width: 5%;
+  background: linear-gradient(270deg, #a09080, #b8a898);
+  border-left: 2px solid #8a7a6a;
+}
+.pv-baseboard {
+  position: absolute; bottom: 30%; left: 0; right: 0; height: 12px;
+  background: #6a5540;
+}
+/* Giant comb */
+.giant-comb {
+  position: absolute; left: 12%; bottom: 30%; width: 60px; height: 55%;
+  z-index: 5;
+}
+.comb-handle {
+  width: 60px; height: 40%;
+  background: linear-gradient(180deg, #e8d0a0, #c8a870);
+  border-radius: 8px 8px 0 0;
+  border: 2px solid #a08050;
+}
+.comb-teeth {
+  display: flex; justify-content: space-between; padding: 0 4px;
+}
+.comb-tooth {
+  width: 4px; height: 80px;
+  background: linear-gradient(180deg, #c8a870, #a08050);
+  border-radius: 0 0 1px 1px;
+}
+/* Giant wine glass */
+.giant-glass {
+  position: absolute; right: 18%; bottom: 30%; z-index: 5;
+}
+.glass-bowl {
+  width: 100px; height: 120px;
+  background: radial-gradient(ellipse at 30% 30%, rgba(200,220,240,0.4), rgba(160,190,220,0.15));
+  border: 2px solid rgba(180,200,220,0.5);
+  border-radius: 50% 50% 45% 45%;
+  box-shadow: inset 0 -20px 40px rgba(180,200,220,0.1);
+}
+.glass-stem {
+  width: 8px; height: 80px;
+  background: rgba(180,200,220,0.4);
+  margin: 0 auto;
+  border: 1px solid rgba(180,200,220,0.3);
+}
+.glass-base {
+  width: 70px; height: 10px;
+  background: rgba(180,200,220,0.35);
+  border-radius: 50%;
+  margin: 0 auto;
+  border: 1px solid rgba(180,200,220,0.3);
+}
+/* Giant matchstick */
+.giant-match {
+  position: absolute; left: 42%; bottom: 30%;
+  transform: rotate(-8deg); transform-origin: bottom center;
+  z-index: 4;
+}
+.match-stick {
+  width: 12px; height: 300px;
+  background: linear-gradient(90deg, #e8d8b0, #d8c8a0, #e8d8b0);
+  border-radius: 2px;
+}
+.match-head {
+  width: 20px; height: 28px;
+  background: radial-gradient(circle at 50% 60%, #d44, #922);
+  border-radius: 50% 50% 30% 30%;
+  margin: 0 auto -2px;
+  position: relative; left: -4px;
+}
+/* Bed */
+.pv-bed {
+  position: absolute; right: 5%; bottom: 30%; width: 35%; height: 18%;
+  z-index: 2;
+}
+.bed-frame {
+  width: 100%; height: 100%;
+  background: linear-gradient(180deg, #f0e0d0, #e0d0c0);
+  border: 3px solid #8a6a4a;
+  border-radius: 4px;
+}
+.bed-pillow {
+  position: absolute; right: 8%; top: 15%;
+  width: 28%; height: 50%;
+  background: #f5f0e8;
+  border-radius: 30%;
+  border: 1px solid #d8d0c0;
+}
+.bed-blanket {
+  position: absolute; left: 0; bottom: 0;
+  width: 85%; height: 70%;
+  background: linear-gradient(135deg, #7a90a8, #6a80a0);
+  border-radius: 0 30% 0 0;
+  border-top: 2px solid #8a9ab0;
+}
+/* Hidden apple (behind comb) */
+.hidden-apple {
+  position: absolute; left: 14%; bottom: 31%;
+  width: 24px; height: 24px;
+  background: radial-gradient(circle at 35% 35%, #8fce6f, #4a8f2a);
+  border-radius: 50%;
+  z-index: 3;
+  display: none; /* shown when comb is shrunk */
+}
+.hidden-apple::before {
+  content: ''; position: absolute;
+  top: -4px; left: 50%; transform: translateX(-50%);
+  width: 3px; height: 6px;
+  background: #5a3a1a;
+  border-radius: 1px;
+}
+.hidden-apple.revealed { display: block; }
+/* Shrunk comb (normal size) */
+.giant-comb.shrunk {
+  height: 12%; width: 20px;
+  opacity: 0.6;
+  transition: all 0.8s ease;
+}
+.giant-comb.shrunk .comb-tooth { width: 2px; height: 20px; }
+
+/* Door back to empire */
+.pv-door {
+  position: absolute; left: 1%; bottom: 30%; width: 3.5%; height: 20%;
+  background: linear-gradient(90deg, #5a4a3a, #6a5a4a);
+  border: 2px solid #4a3a2a;
+  border-radius: 2px 2px 0 0;
+  z-index: 6;
+}
+.pv-doorknob {
+  position: absolute; right: 4px; top: 55%;
+  width: 6px; height: 6px;
+  background: #c8a860;
+  border-radius: 50%;
 }
 
 /* ============================================================
-   SCENE: Golconda (Room 3) — placeholder
+   SCENE: Golconda (Room 3)
+   Raining businessmen in front of a building facade.
    ============================================================ */
 #scene-golconda {
-  background: linear-gradient(180deg, #a8c8e8 0%, #90b0d0 100%);
+  background: linear-gradient(180deg, #b8d4e8 0%, #a0c0d8 30%, #90b0c8 100%);
+}
+.golc-building {
+  position: absolute; bottom: 0; left: 10%; right: 10%;
+  height: 65%;
+  background: #c8b8a0;
+  border-top: 4px solid #a89878;
+}
+.golc-window {
+  position: absolute;
+  width: 10%; height: 12%;
+  background: #4a5a6a;
+  border: 3px solid #a89878;
+}
+.golc-window::after {
+  content: ''; position: absolute;
+  left: 50%; top: 0; bottom: 0; width: 2px;
+  background: #a89878; transform: translateX(-50%);
+}
+.golc-window::before {
+  content: ''; position: absolute;
+  top: 50%; left: 0; right: 0; height: 2px;
+  background: #a89878; transform: translateY(-50%);
+}
+.golc-roof {
+  position: absolute; bottom: 65%; left: 8%; right: 8%;
+  height: 3%;
+  background: #8a7a6a;
+}
+.golc-cornice {
+  position: absolute; bottom: 67%; left: 9%; right: 9%;
+  height: 1.5%;
+  background: #9a8a7a;
+  border-bottom: 2px solid #7a6a5a;
+}
+/* Falling men */
+.falling-man {
+  position: absolute;
+  width: 30px;
+  z-index: 5;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+.fm-hat {
+  width: 24px; height: 10px;
+  background: #1a1a2a;
+  border-radius: 50%;
+  margin: 0 auto;
+  position: relative;
+}
+.fm-hat::before {
+  content: ''; position: absolute;
+  bottom: 4px; left: 50%; transform: translateX(-50%);
+  width: 14px; height: 12px;
+  background: #1a1a2a;
+  border-radius: 40% 40% 0 0;
+}
+.fm-body {
+  width: 16px; height: 30px;
+  background: #2a2a3a;
+  margin: 0 auto;
+  border-radius: 3px 3px 0 0;
+}
+.fm-legs {
+  display: flex; justify-content: center; gap: 2px;
+}
+.fm-leg {
+  width: 5px; height: 20px;
+  background: #2a2a3a;
+}
+@keyframes fall-1 { 0% { top: -80px; } 100% { top: 110%; } }
+@keyframes fall-2 { 0% { top: -120px; } 100% { top: 110%; } }
+@keyframes fall-3 { 0% { top: -60px; } 100% { top: 110%; } }
+
+/* Catch zone highlight */
+.golc-catch-zone {
+  position: absolute; bottom: 15%; left: 44%; width: 12%; height: 8%;
+  border: 2px dashed rgba(201,169,110,0.0);
+  border-radius: 50%;
+  transition: border-color 0.3s;
+}
+.golc-catch-zone.active {
+  border-color: rgba(201,169,110,0.4);
+  animation: pulse-border 1.5s ease-in-out infinite;
+}
+@keyframes pulse-border {
+  0%, 100% { border-color: rgba(201,169,110,0.2); }
+  50% { border-color: rgba(201,169,110,0.5); }
+}
+/* Street */
+.golc-street {
+  position: absolute; bottom: 0; left: 0; right: 0; height: 12%;
+  background: #7a7a7a;
+  border-top: 2px solid #6a6a6a;
+}
+
+/* ============================================================
+   SCENE: The Human Condition (Room 4)
+   Interior with window; an easel holds a canvas matching
+   the landscape behind it perfectly.
+   ============================================================ */
+#scene-human {
+  background: linear-gradient(180deg, #d0c8b8 0%, #c0b8a8 100%);
+}
+.hc-wall {
+  position: absolute; inset: 0; bottom: 25%;
+  background: #c8baa8;
+}
+.hc-floor {
+  position: absolute; bottom: 0; left: 0; right: 0; height: 25%;
+  background: linear-gradient(180deg, #8a7a5a, #7a6a4a);
+}
+.hc-baseboard {
+  position: absolute; bottom: 25%; left: 0; right: 0; height: 10px;
+  background: #5a4a3a;
+}
+/* Window */
+.hc-window {
+  position: absolute; top: 10%; left: 50%; transform: translateX(-50%);
+  width: 35%; height: 55%;
+  background: linear-gradient(180deg, #88b7d5 0%, #a0c8e0 30%, #6aaa4a 60%, #4a8a2a 100%);
+  border: 8px solid #5a4a3a;
+  z-index: 2;
+  overflow: hidden;
+}
+.hc-window-cross-v {
+  position: absolute; left: 50%; top: 0; bottom: 0; width: 4px;
+  background: #5a4a3a; transform: translateX(-50%); z-index: 3;
+}
+.hc-window-cross-h {
+  position: absolute; top: 40%; left: 0; right: 0; height: 4px;
+  background: #5a4a3a; z-index: 3;
+}
+/* Landscape through window (real — subtly different) */
+.hc-real-landscape {
+  position: absolute; inset: 0;
+  z-index: 1;
+}
+.hc-real-hill {
+  position: absolute; bottom: 35%; left: -10%; right: -10%;
+  height: 30%;
+  background: #4a8a2a;
+  border-radius: 50%;
+}
+.hc-real-tree {
+  position: absolute; bottom: 48%; left: 60%;
+  width: 6px; height: 30px;
+  background: #3a2a1a;
+}
+.hc-real-tree::before {
+  content: ''; position: absolute;
+  top: -20px; left: -12px;
+  width: 30px; height: 25px;
+  background: #2a6a1a;
+  border-radius: 50%;
+}
+/* Hidden door in real landscape (only visible when canvas moved) */
+.hc-hidden-door {
+  position: absolute; bottom: 40%; right: 22%;
+  width: 20px; height: 30px;
+  background: #6a4a2a;
+  border: 2px solid #4a3a1a;
+  border-radius: 2px 2px 0 0;
+  z-index: 2;
+  display: none;
+}
+.hc-hidden-door.revealed { display: block; }
+.hc-hidden-doorknob {
+  position: absolute; right: 3px; top: 55%;
+  width: 4px; height: 4px;
+  background: #c8a860;
+  border-radius: 50%;
+}
+/* Easel */
+.hc-easel {
+  position: absolute; top: 8%; left: 48%; transform: translateX(-50%);
+  z-index: 5;
+  transition: left 1s ease;
+}
+.hc-easel.moved { left: 78%; }
+.easel-leg-l {
+  position: absolute; bottom: -120px; left: 5px;
+  width: 4px; height: 120px;
+  background: #5a4020;
+  transform: rotate(5deg); transform-origin: top center;
+}
+.easel-leg-r {
+  position: absolute; bottom: -120px; right: 5px;
+  width: 4px; height: 120px;
+  background: #5a4020;
+  transform: rotate(-5deg); transform-origin: top center;
+}
+.easel-shelf {
+  position: absolute; bottom: -20px; left: -5px; right: -5px;
+  height: 6px; background: #5a4020; border-radius: 2px;
+}
+/* Canvas on easel — matches the window landscape perfectly */
+.hc-canvas {
+  width: calc(35vw - 16px); max-width: 280px; min-width: 160px;
+  aspect-ratio: 1 / 1.1;
+  background: linear-gradient(180deg, #88b7d5 0%, #a0c8e0 30%, #6aaa4a 60%, #4a8a2a 100%);
+  border: 3px solid #7a6a5a;
+  box-shadow: 2px 2px 8px rgba(0,0,0,0.3);
+  position: relative;
+}
+/* Curtains */
+.hc-curtain {
+  position: absolute; top: 5%; width: 8%; height: 58%;
+  background: linear-gradient(180deg, #8a3030, #6a2020);
+  z-index: 4;
+}
+.hc-curtain-l { left: 26%; border-radius: 0 0 30% 0; }
+.hc-curtain-r { right: 26%; border-radius: 0 0 0 30%; }
+
+/* ============================================================
+   SCENE: Time Transfixed (Room 5)
+   Victorian room with a train emerging from the fireplace.
+   ============================================================ */
+#scene-time {
+  background: #c0b0a0;
+}
+.tt-wall {
+  position: absolute; inset: 0; bottom: 25%;
+  background: linear-gradient(180deg, #b8a898, #c0b0a0);
+}
+.tt-floor {
+  position: absolute; bottom: 0; left: 0; right: 0; height: 25%;
+  background: linear-gradient(180deg, #6a5a4a, #5a4a3a);
+}
+.tt-baseboard {
+  position: absolute; bottom: 25%; left: 0; right: 0; height: 10px;
+  background: #4a3a2a;
+}
+/* Fireplace */
+.tt-fireplace {
+  position: absolute; bottom: 25%; left: 50%; transform: translateX(-50%);
+  width: 30%; height: 45%;
+  z-index: 3;
+}
+.fp-mantle {
+  position: absolute; top: 0; left: -10%; right: -10%;
+  height: 8%; background: #4a3a2a;
+  border-radius: 3px 3px 0 0;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+.fp-surround {
+  position: absolute; top: 8%; left: 0; right: 0; bottom: 0;
+  background: #3a2a1a;
+  border: 6px solid #4a3a2a;
+}
+.fp-opening {
+  position: absolute; top: 10%; left: 15%; right: 15%; bottom: 0;
+  background: #1a1208;
+  border-radius: 40% 40% 0 0;
+}
+/* Train emerging from fireplace */
+.tt-train {
+  position: absolute; top: 30%; left: 50%; transform: translateX(-50%);
+  z-index: 4;
+}
+.train-boiler {
+  width: 80px; height: 40px;
+  background: linear-gradient(180deg, #2a2a2a, #1a1a1a);
+  border-radius: 10px 40px 0 0;
+  border: 2px solid #3a3a3a;
+}
+.train-smoke-stack {
+  position: absolute; top: -20px; left: 60%;
+  width: 12px; height: 20px;
+  background: #2a2a2a;
+  border-radius: 2px 2px 0 0;
+}
+.train-smoke-stack::after {
+  content: ''; position: absolute;
+  top: -6px; left: -3px;
+  width: 18px; height: 6px;
+  background: #3a3a3a;
+  border-radius: 2px;
+}
+.train-front {
+  position: absolute; right: -12px; top: 10px;
+  width: 12px; height: 30px;
+  background: #2a2a2a;
+  border-radius: 0 5px 5px 0;
+}
+.train-light {
+  position: absolute; right: -16px; top: 18px;
+  width: 8px; height: 8px;
+  background: #ffd;
+  border-radius: 50%;
+  box-shadow: 0 0 10px 4px rgba(255,255,200,0.3);
+}
+/* Clock on mantle */
+.tt-clock {
+  position: absolute; bottom: 47.5%; left: 38%;
+  z-index: 5;
+}
+.clock-face {
+  width: 36px; height: 36px;
+  background: #f0e8d8;
+  border: 3px solid #4a3a2a;
+  border-radius: 50%;
+  position: relative;
+}
+.clock-hand-h {
+  position: absolute; bottom: 50%; left: 50%;
+  width: 2px; height: 10px;
+  background: #2a1a0a;
+  transform-origin: bottom center;
+  transform: rotate(-30deg);
+}
+.clock-hand-m {
+  position: absolute; bottom: 50%; left: 50%;
+  width: 1px; height: 14px;
+  background: #2a1a0a;
+  transform-origin: bottom center;
+  transform: rotate(180deg);
+}
+/* Mirror on wall */
+.tt-mirror {
+  position: absolute; top: 10%; right: 15%;
+  width: 15%; height: 30%;
+  background: linear-gradient(135deg, #c8d8e8, #a8b8c8, #d0dce8);
+  border: 6px solid #6a5a3a;
+  border-radius: 50% 50% 3px 3px;
+  z-index: 2;
+  box-shadow: inset 0 0 20px rgba(0,0,0,0.1);
+}
+/* Steam / smoke particles done via JS */
+
+/* Door to mirror room (on the right wall) */
+.tt-door {
+  position: absolute; right: 2%; bottom: 25%; width: 8%; height: 30%;
+  background: linear-gradient(90deg, #5a4a3a, #4a3a2a);
+  border: 3px solid #3a2a1a;
+  border-radius: 3px 3px 0 0;
+  z-index: 2;
+}
+.tt-doorknob {
+  position: absolute; left: 8px; top: 55%;
+  width: 8px; height: 8px;
+  background: #c8a860;
+  border-radius: 50%;
+}
+
+/* ============================================================
+   SCENE: Not to Be Reproduced (Room 6)
+   A room with a mirror that shows the back of your head.
+   ============================================================ */
+#scene-mirror {
+  background: #b8a898;
+}
+.mr-wall {
+  position: absolute; inset: 0; bottom: 28%;
+  background: linear-gradient(180deg, #b0a090, #b8a898);
+}
+.mr-floor {
+  position: absolute; bottom: 0; left: 0; right: 0; height: 28%;
+  background: linear-gradient(180deg, #5a5040, #4a4030);
+}
+.mr-baseboard {
+  position: absolute; bottom: 28%; left: 0; right: 0; height: 8px;
+  background: #3a3020;
+}
+/* Main mirror */
+.mr-mirror {
+  position: absolute; top: 8%; left: 50%; transform: translateX(-50%);
+  width: 28%; height: 48%;
+  background: linear-gradient(180deg, #c8d0d8, #b0b8c0, #c0c8d0);
+  border: 8px solid #6a5a3a;
+  z-index: 3;
+  box-shadow: inset 0 0 30px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.2);
+  overflow: hidden;
+}
+/* Figure seen in mirror (back of head) */
+.mr-reflection {
+  position: absolute; bottom: 10%; left: 50%; transform: translateX(-50%);
+  z-index: 4;
+}
+.ref-hat {
+  width: 40px; height: 16px;
+  background: #1a1a2a;
+  border-radius: 50%;
+  margin: 0 auto;
+}
+.ref-hat::before {
+  content: ''; position: absolute;
+  bottom: 8px; left: 50%; transform: translateX(-50%);
+  width: 24px; height: 18px;
+  background: #1a1a2a;
+  border-radius: 40% 40% 0 0;
+}
+.ref-head {
+  width: 30px; height: 22px;
+  background: #e8d0b8;
+  border-radius: 40%;
+  margin: -4px auto 0;
+}
+.ref-hair {
+  width: 28px; height: 14px;
+  background: #4a3020;
+  border-radius: 40% 40% 0 0;
+  margin: 0 auto;
+  position: relative; top: -18px;
+}
+.ref-shoulders {
+  width: 50px; height: 20px;
+  background: #2a2a3a;
+  border-radius: 30% 30% 0 0;
+  margin: -6px auto 0;
+}
+/* Shelf below mirror */
+.mr-shelf {
+  position: absolute; top: 57%; left: 38%; right: 38%;
+  height: 3%;
+  background: #5a4a3a;
+  border-radius: 2px;
+  z-index: 3;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+/* Book on shelf */
+.mr-book {
+  position: absolute; top: 54.5%; left: 42%;
+  width: 20px; height: 28px;
+  background: #8a2020;
+  border-radius: 0 2px 2px 0;
+  z-index: 4;
+  border-right: 2px solid #6a1010;
+}
+/* Letter placement zone */
+.mr-letter-zone {
+  position: absolute; top: 54%; left: 50%; transform: translateX(-50%);
+  width: 40px; height: 30px;
+  z-index: 5;
+}
+/* Crack in mirror (when letter reveals truth) */
+.mr-crack {
+  position: absolute; top: 20%; left: 30%;
+  width: 40%; height: 60%;
+  z-index: 6;
+  opacity: 0;
+  transition: opacity 0.8s;
+  pointer-events: none;
+}
+.mr-crack.visible { opacity: 1; }
+.mr-crack-line {
+  position: absolute;
+  background: rgba(40,30,20,0.6);
+  transform-origin: center;
+}
+.mr-crack-1 { top: 10%; left: 40%; width: 2px; height: 80%; transform: rotate(5deg); }
+.mr-crack-2 { top: 20%; left: 20%; width: 1px; height: 50%; transform: rotate(-15deg); }
+.mr-crack-3 { top: 30%; left: 60%; width: 1px; height: 40%; transform: rotate(20deg); }
+.mr-crack-4 { top: 40%; left: 35%; width: 1px; height: 30%; transform: rotate(-35deg); }
+/* Passage behind cracked mirror */
+.mr-passage {
+  position: absolute; top: 15%; left: 39%; width: 22%; height: 40%;
+  background: radial-gradient(ellipse, #1a0a1a, #0a0010);
+  border-radius: 45% 45% 0 0;
+  z-index: 2;
+  display: none;
+}
+.mr-passage.revealed { display: block; }
+
+/* ============================================================
+   SCENE: The Lovers (Room 7 — Final)
+   Two figures with cloth over their faces, leaning toward
+   each other in soft ethereal light.
+   ============================================================ */
+#scene-lovers {
+  background: linear-gradient(180deg, #d8d0c8 0%, #e0d8d0 40%, #c8c0b8 100%);
+}
+.lv-vignette {
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse at 50% 50%, transparent 40%, rgba(0,0,0,0.3) 100%);
+  z-index: 2;
+  pointer-events: none;
+}
+.lv-light {
+  position: absolute; top: -20%; left: 50%; transform: translateX(-50%);
+  width: 60%; height: 60%;
+  background: radial-gradient(ellipse, rgba(255,250,240,0.4), transparent 70%);
+  pointer-events: none;
+}
+/* Figure left */
+.lv-figure {
+  position: absolute; bottom: 20%; z-index: 3;
+}
+.lv-figure-left { left: 28%; }
+.lv-figure-right { right: 28%; }
+.lv-cloth {
+  width: 50px; height: 50px;
+  background: #f0ece8;
+  border-radius: 30%;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  position: relative;
+}
+.lv-cloth::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(135deg, transparent 30%, rgba(0,0,0,0.05) 100%);
+  border-radius: 30%;
+}
+.lv-neck {
+  width: 14px; height: 16px;
+  background: #e8d0b8;
+  margin: 0 auto;
+  display: none; /* shown when cloth removed */
+}
+.lv-shoulders-l {
+  width: 60px; height: 80px;
+  background: linear-gradient(180deg, #2a3a4a, #1a2a3a);
+  border-radius: 20% 30% 0 0;
+  margin-top: -2px;
+}
+.lv-shoulders-r {
+  width: 60px; height: 80px;
+  background: linear-gradient(180deg, #8a3030, #6a2020);
+  border-radius: 30% 20% 0 0;
+  margin-top: -2px;
+}
+/* Revealed face under cloth */
+.lv-face {
+  width: 44px; height: 52px;
+  background: #e8d0b8;
+  border-radius: 45%;
+  position: relative;
+  display: none;
+  margin: 0 auto;
+}
+.lv-face.revealed { display: block; }
+.lv-face .eye {
+  position: absolute; top: 35%;
+  width: 5px; height: 3px;
+  background: #2a2a3a;
+  border-radius: 50%;
+}
+.lv-face .eye-l { left: 25%; }
+.lv-face .eye-r { right: 25%; }
+.lv-face .mouth {
+  position: absolute; bottom: 25%; left: 50%;
+  transform: translateX(-50%);
+  width: 12px; height: 3px;
+  background: #c08080;
+  border-radius: 0 0 50% 50%;
+}
+/* Cloth that can be removed (clickable overlay) */
+.lv-cloth-overlay {
+  position: absolute; top: 0; left: 50%;
+  transform: translateX(-50%);
+  width: 50px; height: 50px;
+  z-index: 10;
+  transition: opacity 0.8s, transform 0.8s;
+}
+.lv-cloth-overlay.removed {
+  opacity: 0;
+  transform: translateX(-50%) translateY(20px);
+  pointer-events: none;
+}
+/* Choice buttons */
+.lv-choice {
+  position: absolute; bottom: 8%; left: 50%; transform: translateX(-50%);
+  display: flex; gap: 20px;
+  z-index: 20;
+}
+.lv-choice-btn {
+  padding: 12px 24px;
+  background: rgba(10,14,26,0.85);
+  color: var(--accent);
+  border: 1px solid rgba(201,169,110,0.4);
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.3s;
+  backdrop-filter: blur(4px);
+}
+.lv-choice-btn:hover {
+  background: rgba(26,26,46,0.95);
+  border-color: var(--accent);
+  box-shadow: 0 0 15px rgba(201,169,110,0.2);
+}
+.lv-choice { display: none; }
+.lv-choice.visible { display: flex; }
+
+/* Museum ending frame */
+.museum-frame {
+  position: absolute; inset: 10% 15%;
+  border: 16px solid #5a4a3a;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4), inset 0 0 0 2px #7a6a5a;
+  z-index: 30;
+  opacity: 0;
+  transition: opacity 2s ease;
+  pointer-events: none;
+}
+.museum-frame.visible { opacity: 1; }
+.museum-placard {
+  position: absolute; bottom: -60px; left: 50%; transform: translateX(-50%);
+  background: #f0e8d8;
+  padding: 8px 20px;
+  border: 1px solid #d0c8b8;
+  text-align: center;
+  white-space: nowrap;
+}
+.museum-placard .title {
+  font-style: italic;
+  color: #2a2a2a;
+  font-size: 0.85rem;
+}
+.museum-placard .artist {
+  color: #6a6a6a;
+  font-size: 0.7rem;
+  margin-top: 2px;
 }
 
 /* ============================================================
@@ -586,21 +1343,378 @@ html, body {
            style="left:46%; bottom:3%; width:100px; height:20px;">
         <div class="hotspot-label">A puddle</div>
       </div>
+      <div class="hotspot" id="hs-door-center" data-action="door-human"
+           style="left:30%; bottom:28%; width:40px; height:60px;">
+        <div class="hotspot-label">A passage</div>
+      </div>
     </div>
 
-    <!-- ROOM 2: Personal Values (placeholder scene) -->
+    <!-- ROOM 2: Personal Values -->
     <div class="scene" id="scene-personal" data-scene="personal">
+      <div class="pv-wall-left"></div>
+      <div class="pv-wall-right"></div>
+      <div class="pv-floor"></div>
+      <div class="pv-baseboard"></div>
+
+      <!-- Giant comb -->
+      <div class="giant-comb parallax-layer" data-depth="0.03" id="pv-comb">
+        <div class="comb-handle"></div>
+        <div class="comb-teeth">
+          <div class="comb-tooth"></div><div class="comb-tooth"></div>
+          <div class="comb-tooth"></div><div class="comb-tooth"></div>
+          <div class="comb-tooth"></div><div class="comb-tooth"></div>
+          <div class="comb-tooth"></div><div class="comb-tooth"></div>
+        </div>
+      </div>
+
+      <!-- Hidden apple (behind comb) -->
+      <div class="hidden-apple" id="pv-apple-obj"></div>
+
+      <!-- Giant wine glass -->
+      <div class="giant-glass parallax-layer" data-depth="0.025">
+        <div class="glass-bowl"></div>
+        <div class="glass-stem"></div>
+        <div class="glass-base"></div>
+      </div>
+
+      <!-- Giant matchstick -->
+      <div class="giant-match parallax-layer" data-depth="0.02">
+        <div class="match-head"></div>
+        <div class="match-stick"></div>
+      </div>
+
+      <!-- Bed -->
+      <div class="pv-bed parallax-layer" data-depth="0.015">
+        <div class="bed-frame">
+          <div class="bed-pillow"></div>
+          <div class="bed-blanket"></div>
+        </div>
+      </div>
+
+      <!-- Door -->
+      <div class="pv-door">
+        <div class="pv-doorknob"></div>
+      </div>
+
+      <!-- Hotspots -->
+      <div class="hotspot" data-action="pv-comb"
+           style="left:10%; bottom:30%; width:70px; height:55%;">
+        <div class="hotspot-label">Giant comb</div>
+      </div>
+      <div class="hotspot" data-action="pv-glass"
+           style="right:16%; bottom:30%; width:110px; height:50%;">
+        <div class="hotspot-label">Giant wine glass</div>
+      </div>
+      <div class="hotspot" data-action="pv-match"
+           style="left:40%; bottom:30%; width:40px; height:60%;">
+        <div class="hotspot-label">Giant matchstick</div>
+      </div>
+      <div class="hotspot" data-action="pv-bed"
+           style="right:5%; bottom:30%; width:35%; height:18%;">
+        <div class="hotspot-label">A bed</div>
+      </div>
+      <div class="hotspot" id="hs-pv-apple" data-action="pv-apple"
+           style="left:12%; bottom:29%; width:30px; height:30px; display:none;">
+        <div class="hotspot-label">Something green</div>
+      </div>
       <div class="hotspot" data-action="back-empire"
-           style="right:5%; bottom:20%; width:60px; height:60px;">
+           style="left:0%; bottom:30%; width:5%; height:20%;">
+        <div class="hotspot-label">Door (back)</div>
+      </div>
+    </div>
+
+    <!-- ROOM 3: Golconda -->
+    <div class="scene" id="scene-golconda" data-scene="golconda">
+      <div class="golc-cornice"></div>
+      <div class="golc-roof"></div>
+      <div class="golc-building">
+        <!-- Windows: 3 rows x 4 cols -->
+        <div class="golc-window" style="top:8%; left:8%;"></div>
+        <div class="golc-window" style="top:8%; left:30%;"></div>
+        <div class="golc-window" style="top:8%; left:55%;"></div>
+        <div class="golc-window" style="top:8%; left:78%;"></div>
+        <div class="golc-window" style="top:38%; left:8%;"></div>
+        <div class="golc-window" style="top:38%; left:30%;"></div>
+        <div class="golc-window" style="top:38%; left:55%;"></div>
+        <div class="golc-window" style="top:38%; left:78%;"></div>
+        <div class="golc-window" style="top:68%; left:8%;"></div>
+        <div class="golc-window" style="top:68%; left:30%;"></div>
+        <div class="golc-window" style="top:68%; left:55%;"></div>
+        <div class="golc-window" style="top:68%; left:78%;"></div>
+      </div>
+      <div class="golc-street"></div>
+
+      <!-- Falling men (animated) -->
+      <div class="falling-man" id="fm-1" style="left:15%; animation: fall-1 8s linear infinite;">
+        <div class="fm-hat"></div><div class="fm-body"></div>
+        <div class="fm-legs"><div class="fm-leg"></div><div class="fm-leg"></div></div>
+      </div>
+      <div class="falling-man" id="fm-2" style="left:35%; animation: fall-2 10s linear infinite; animation-delay:-3s;">
+        <div class="fm-hat"></div><div class="fm-body"></div>
+        <div class="fm-legs"><div class="fm-leg"></div><div class="fm-leg"></div></div>
+      </div>
+      <div class="falling-man" id="fm-3" style="left:55%; animation: fall-1 9s linear infinite; animation-delay:-5s;">
+        <div class="fm-hat"></div><div class="fm-body"></div>
+        <div class="fm-legs"><div class="fm-leg"></div><div class="fm-leg"></div></div>
+      </div>
+      <div class="falling-man" id="fm-4" style="left:72%; animation: fall-3 7s linear infinite; animation-delay:-1s;">
+        <div class="fm-hat"></div><div class="fm-body"></div>
+        <div class="fm-legs"><div class="fm-leg"></div><div class="fm-leg"></div></div>
+      </div>
+      <div class="falling-man" id="fm-5" style="left:88%; animation: fall-2 11s linear infinite; animation-delay:-7s;">
+        <div class="fm-hat"></div><div class="fm-body"></div>
+        <div class="fm-legs"><div class="fm-leg"></div><div class="fm-leg"></div></div>
+      </div>
+      <div class="falling-man" id="fm-6" style="left:5%; animation: fall-3 9.5s linear infinite; animation-delay:-4s;">
+        <div class="fm-hat"></div><div class="fm-body"></div>
+        <div class="fm-legs"><div class="fm-leg"></div><div class="fm-leg"></div></div>
+      </div>
+
+      <!-- Catch zone -->
+      <div class="golc-catch-zone" id="golc-catch"></div>
+
+      <!-- Hotspots -->
+      <div class="hotspot" data-action="golc-men"
+           style="left:20%; top:10%; width:60%; height:40%;">
+        <div class="hotspot-label">Falling men</div>
+      </div>
+      <div class="hotspot" data-action="golc-catch" id="hs-golc-catch"
+           style="left:44%; bottom:13%; width:12%; height:10%;">
+        <div class="hotspot-label">Stand here</div>
+      </div>
+      <div class="hotspot" data-action="golc-building"
+           style="left:15%; bottom:12%; width:70%; height:25%;">
+        <div class="hotspot-label">Building facade</div>
+      </div>
+      <div class="hotspot" data-action="back-empire"
+           style="left:0%; bottom:0%; width:10%; height:12%;">
         <div class="hotspot-label">Go back</div>
       </div>
     </div>
 
-    <!-- ROOM 3: Golconda (placeholder scene) -->
-    <div class="scene" id="scene-golconda" data-scene="golconda">
+    <!-- ROOM 4: The Human Condition -->
+    <div class="scene" id="scene-human" data-scene="human">
+      <div class="hc-wall"></div>
+      <div class="hc-floor"></div>
+      <div class="hc-baseboard"></div>
+
+      <!-- Window with real landscape -->
+      <div class="hc-window parallax-layer" data-depth="0.01">
+        <div class="hc-real-landscape">
+          <div class="hc-real-hill"></div>
+          <div class="hc-real-tree"></div>
+          <div class="hc-hidden-door" id="hc-door-obj">
+            <div class="hc-hidden-doorknob"></div>
+          </div>
+        </div>
+        <div class="hc-window-cross-v"></div>
+        <div class="hc-window-cross-h"></div>
+      </div>
+
+      <!-- Curtains -->
+      <div class="hc-curtain hc-curtain-l parallax-layer" data-depth="0.04"></div>
+      <div class="hc-curtain hc-curtain-r parallax-layer" data-depth="0.04"></div>
+
+      <!-- Easel with canvas -->
+      <div class="hc-easel parallax-layer" data-depth="0.05" id="hc-easel">
+        <div class="hc-canvas"></div>
+        <div class="easel-leg-l"></div>
+        <div class="easel-leg-r"></div>
+        <div class="easel-shelf"></div>
+      </div>
+
+      <!-- Hotspots -->
+      <div class="hotspot" data-action="hc-canvas"
+           style="left:35%; top:8%; width:30%; height:55%;">
+        <div class="hotspot-label">Canvas on easel</div>
+      </div>
+      <div class="hotspot" data-action="hc-window"
+           style="left:38%; top:12%; width:24%; height:48%; display:none;"
+           id="hs-hc-window">
+        <div class="hotspot-label">The window</div>
+      </div>
+      <div class="hotspot" data-action="hc-hidden-door"
+           style="left:52%; top:30%; width:40px; height:50px; display:none;"
+           id="hs-hc-door">
+        <div class="hotspot-label">A hidden door</div>
+      </div>
       <div class="hotspot" data-action="back-empire"
-           style="left:5%; bottom:20%; width:60px; height:60px;">
+           style="left:0%; bottom:0%; width:8%; height:25%;">
         <div class="hotspot-label">Go back</div>
+      </div>
+    </div>
+
+    <!-- ROOM 5: Time Transfixed -->
+    <div class="scene" id="scene-time" data-scene="time">
+      <div class="tt-wall"></div>
+      <div class="tt-floor"></div>
+      <div class="tt-baseboard"></div>
+
+      <!-- Fireplace -->
+      <div class="tt-fireplace parallax-layer" data-depth="0.03">
+        <div class="fp-mantle"></div>
+        <div class="fp-surround">
+          <div class="fp-opening"></div>
+        </div>
+      </div>
+
+      <!-- Train -->
+      <div class="tt-train parallax-layer" data-depth="0.04">
+        <div class="train-smoke-stack"></div>
+        <div class="train-boiler"></div>
+        <div class="train-front"></div>
+        <div class="train-light"></div>
+      </div>
+
+      <!-- Clock -->
+      <div class="tt-clock parallax-layer" data-depth="0.035">
+        <div class="clock-face">
+          <div class="clock-hand-h"></div>
+          <div class="clock-hand-m"></div>
+        </div>
+      </div>
+
+      <!-- Mirror -->
+      <div class="tt-mirror parallax-layer" data-depth="0.02"></div>
+
+      <!-- Door to mirror room -->
+      <div class="tt-door">
+        <div class="tt-doorknob"></div>
+      </div>
+
+      <!-- Hotspots -->
+      <div class="hotspot" data-action="tt-train"
+           style="left:38%; top:20%; width:24%; height:30%;">
+        <div class="hotspot-label">A locomotive</div>
+      </div>
+      <div class="hotspot" data-action="tt-fireplace"
+           style="left:35%; bottom:25%; width:30%; height:35%;">
+        <div class="hotspot-label">Fireplace</div>
+      </div>
+      <div class="hotspot" data-action="tt-clock"
+           style="left:36%; top:28%; width:50px; height:50px;">
+        <div class="hotspot-label">Clock</div>
+      </div>
+      <div class="hotspot" data-action="tt-mirror"
+           style="right:13%; top:8%; width:17%; height:32%;">
+        <div class="hotspot-label">Mirror</div>
+      </div>
+      <div class="hotspot" data-action="door-mirror"
+           style="right:0%; bottom:25%; width:10%; height:30%;">
+        <div class="hotspot-label">Door</div>
+      </div>
+      <div class="hotspot" data-action="back-human"
+           style="left:0%; bottom:0%; width:8%; height:25%;">
+        <div class="hotspot-label">Go back</div>
+      </div>
+    </div>
+
+    <!-- ROOM 6: Not to Be Reproduced -->
+    <div class="scene" id="scene-mirror" data-scene="mirror">
+      <div class="mr-wall"></div>
+      <div class="mr-floor"></div>
+      <div class="mr-baseboard"></div>
+
+      <!-- Main mirror -->
+      <div class="mr-mirror parallax-layer" data-depth="0.02">
+        <div class="mr-reflection">
+          <div class="ref-hat"></div>
+          <div class="ref-head">
+            <div class="ref-hair"></div>
+          </div>
+          <div class="ref-shoulders"></div>
+        </div>
+        <!-- Crack overlay -->
+        <div class="mr-crack" id="mr-crack">
+          <div class="mr-crack-line mr-crack-1"></div>
+          <div class="mr-crack-line mr-crack-2"></div>
+          <div class="mr-crack-line mr-crack-3"></div>
+          <div class="mr-crack-line mr-crack-4"></div>
+        </div>
+      </div>
+
+      <!-- Passage (behind cracked mirror) -->
+      <div class="mr-passage" id="mr-passage"></div>
+
+      <!-- Shelf + book -->
+      <div class="mr-shelf"></div>
+      <div class="mr-book"></div>
+      <div class="mr-letter-zone" id="mr-letter-zone"></div>
+
+      <!-- Hotspots -->
+      <div class="hotspot" data-action="mr-mirror"
+           style="left:36%; top:6%; width:28%; height:50%;">
+        <div class="hotspot-label">Mirror</div>
+      </div>
+      <div class="hotspot" data-action="mr-shelf"
+           style="left:36%; top:53%; width:28%; height:6%;">
+        <div class="hotspot-label">Shelf</div>
+      </div>
+      <div class="hotspot" data-action="mr-book"
+           style="left:40%; top:52%; width:30px; height:35px;">
+        <div class="hotspot-label">A book</div>
+      </div>
+      <div class="hotspot" data-action="door-lovers" id="hs-door-lovers"
+           style="left:39%; top:15%; width:22%; height:35%; display:none;">
+        <div class="hotspot-label">The passage</div>
+      </div>
+      <div class="hotspot" data-action="back-time"
+           style="left:0%; bottom:0%; width:8%; height:28%;">
+        <div class="hotspot-label">Go back</div>
+      </div>
+    </div>
+
+    <!-- ROOM 7: The Lovers (Final) -->
+    <div class="scene" id="scene-lovers" data-scene="lovers">
+      <div class="lv-vignette"></div>
+      <div class="lv-light"></div>
+
+      <!-- Figure left (you) -->
+      <div class="lv-figure lv-figure-left" id="lv-left">
+        <div class="lv-cloth" id="lv-cloth-left"></div>
+        <div class="lv-face" id="lv-face-left">
+          <div class="eye eye-l"></div>
+          <div class="eye eye-r"></div>
+          <div class="mouth"></div>
+        </div>
+        <div class="lv-shoulders-l"></div>
+        <div class="lv-cloth-overlay" id="lv-cloth-overlay-left"></div>
+      </div>
+
+      <!-- Figure right (the other) -->
+      <div class="lv-figure lv-figure-right" id="lv-right">
+        <div class="lv-cloth" id="lv-cloth-right"></div>
+        <div class="lv-face" id="lv-face-right">
+          <div class="eye eye-l"></div>
+          <div class="eye eye-r"></div>
+          <div class="mouth"></div>
+        </div>
+        <div class="lv-shoulders-r"></div>
+        <div class="lv-cloth-overlay" id="lv-cloth-overlay-right"></div>
+      </div>
+
+      <!-- Choice buttons -->
+      <div class="lv-choice" id="lv-choice">
+        <button class="lv-choice-btn" id="lv-btn-lift">Lift the cloth</button>
+        <button class="lv-choice-btn" id="lv-btn-leave">Leave it</button>
+      </div>
+
+      <!-- Museum frame for ending -->
+      <div class="museum-frame" id="museum-frame">
+        <div class="museum-placard">
+          <div class="title">Ceci N'est Pas Un Jeu</div>
+          <div class="artist">Mixed media on screen, 2026</div>
+        </div>
+      </div>
+
+      <!-- Hotspots -->
+      <div class="hotspot" data-action="lv-left"
+           style="left:25%; bottom:18%; width:70px; height:55%;">
+        <div class="hotspot-label">A figure</div>
+      </div>
+      <div class="hotspot" data-action="lv-right"
+           style="right:25%; bottom:18%; width:70px; height:55%;">
+        <div class="hotspot-label">A figure</div>
       </div>
     </div>
 
@@ -797,6 +1911,40 @@ class AudioEngine {
         // Wind
         this.createNoise('bandpass', 800, 0.5, 0.04);
         this.createNoise('bandpass', 400, 1, 0.02);
+        // Soft thuds
+        this._scheduleThuds();
+      }
+      else if (scene === 'human') {
+        // Birdsong from outside
+        this.createNoise('bandpass', 3000, 8, 0.01);
+        this._scheduleBirds();
+        // Soft room
+        this.createNoise('lowpass', 150, 0.5, 0.01);
+      }
+      else if (scene === 'time') {
+        // Ticking clock
+        this._scheduleTicks();
+        // Fire crackle
+        this.createNoise('bandpass', 1200, 3, 0.015);
+        this.createNoise('bandpass', 800, 2, 0.01);
+        // Distant train hiss
+        this.createNoise('highpass', 4000, 1, 0.008);
+      }
+      else if (scene === 'mirror') {
+        // Reverberant silence
+        this.createNoise('lowpass', 80, 0.3, 0.02);
+        // Glass resonance
+        this.createTone(1200, 'sine', 0.005);
+        this.createTone(1800, 'sine', 0.003);
+      }
+      else if (scene === 'lovers') {
+        // Gentle heartbeat
+        this._scheduleHeartbeat();
+        // Warm pad
+        this.createTone(220, 'sine', 0.015);
+        this.createTone(330, 'sine', 0.01);
+        this.createTone(440, 'sine', 0.008);
+        this.createNoise('lowpass', 100, 0.5, 0.01);
       }
     }, 200);
   }
@@ -846,6 +1994,74 @@ class AudioEngine {
 
     const next = 4000 + Math.random() * 10000;
     setTimeout(() => this._scheduleCreaks(), next);
+  }
+
+  _scheduleThuds() {
+    if (this.currentScene !== 'golconda' || !this.initialized) return;
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(60, now);
+    osc.frequency.exponentialRampToValueAtTime(30, now + 0.15);
+    const g = this.ctx.createGain();
+    g.gain.setValueAtTime(0.04, now);
+    g.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+    osc.connect(g); g.connect(this.master);
+    osc.start(now); osc.stop(now + 0.25);
+    setTimeout(() => this._scheduleThuds(), 800 + Math.random() * 2000);
+  }
+
+  _scheduleBirds() {
+    if (this.currentScene !== 'human' || !this.initialized) return;
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    osc.type = 'sine';
+    const baseFreq = 1800 + Math.random() * 1200;
+    osc.frequency.setValueAtTime(baseFreq, now);
+    osc.frequency.exponentialRampToValueAtTime(baseFreq * 1.3, now + 0.05);
+    osc.frequency.exponentialRampToValueAtTime(baseFreq * 0.9, now + 0.12);
+    osc.frequency.exponentialRampToValueAtTime(baseFreq * 1.1, now + 0.18);
+    const g = this.ctx.createGain();
+    g.gain.setValueAtTime(0, now);
+    g.gain.linearRampToValueAtTime(0.02, now + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+    osc.connect(g); g.connect(this.master);
+    osc.start(now); osc.stop(now + 0.3);
+    setTimeout(() => this._scheduleBirds(), 2000 + Math.random() * 6000);
+  }
+
+  _scheduleTicks() {
+    if (this.currentScene !== 'time' || !this.initialized) return;
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    osc.type = 'sine';
+    osc.frequency.value = 800;
+    const g = this.ctx.createGain();
+    g.gain.setValueAtTime(0.03, now);
+    g.gain.exponentialRampToValueAtTime(0.001, now + 0.03);
+    osc.connect(g); g.connect(this.master);
+    osc.start(now); osc.stop(now + 0.05);
+    setTimeout(() => this._scheduleTicks(), 1000);
+  }
+
+  _scheduleHeartbeat() {
+    if (this.currentScene !== 'lovers' || !this.initialized) return;
+    const now = this.ctx.currentTime;
+    // Double thump
+    for (let i = 0; i < 2; i++) {
+      const osc = this.ctx.createOscillator();
+      osc.type = 'sine';
+      const t = now + i * 0.18;
+      osc.frequency.setValueAtTime(50, t);
+      osc.frequency.exponentialRampToValueAtTime(30, t + 0.1);
+      const g = this.ctx.createGain();
+      g.gain.setValueAtTime(0, t);
+      g.gain.linearRampToValueAtTime(i === 0 ? 0.06 : 0.04, t + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
+      osc.connect(g); g.connect(this.master);
+      osc.start(t); osc.stop(t + 0.2);
+    }
+    setTimeout(() => this._scheduleHeartbeat(), 1200);
   }
 }
 
@@ -901,6 +2117,27 @@ class ParticleSystem {
     }
   }
 
+  // Smoke from train chimney
+  spawnSmoke() {
+    const cx = this.canvas.width * 0.53;
+    const cy = this.canvas.height * 0.2;
+    for (let i = 0; i < 8; i++) {
+      this.particles.push({
+        x: cx + (Math.random() - 0.5) * 10,
+        y: cy,
+        vx: (Math.random() - 0.5) * 0.3,
+        vy: -Math.random() * 0.5 - 0.2,
+        size: Math.random() * 6 + 3,
+        alpha: Math.random() * 0.15 + 0.05,
+        life: 1,
+        decay: 0.002 + Math.random() * 0.002,
+        type: 'smoke',
+        originX: cx,
+        originY: cy
+      });
+    }
+  }
+
   clear() {
     this.particles = [];
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
@@ -932,7 +2169,6 @@ class ParticleSystem {
         p.y += p.vy + Math.cos(p.phase * 0.7) * 0.2;
         p.alpha += (p.targetAlpha * (0.5 + 0.5 * Math.sin(p.phase * 0.5)) - p.alpha) * 0.02;
 
-        // Wrap around
         if (p.x < -10) p.x = this.canvas.width + 10;
         if (p.x > this.canvas.width + 10) p.x = -10;
         if (p.y < this.canvas.height * 0.4) p.vy = Math.abs(p.vy);
@@ -942,10 +2178,28 @@ class ParticleSystem {
         this.ctx.beginPath();
         this.ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
         this.ctx.fill();
-        // Glow
         this.ctx.fillStyle = `rgba(255, 238, 187, ${p.alpha * 0.3})`;
         this.ctx.beginPath();
         this.ctx.arc(p.x, p.y, p.size * 3, 0, Math.PI * 2);
+        this.ctx.fill();
+      }
+      else if (p.type === 'smoke') {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.size += 0.05;
+        p.alpha -= p.decay;
+        if (p.alpha <= 0) {
+          // Respawn at origin
+          p.x = p.originX + (Math.random() - 0.5) * 10;
+          p.y = p.originY;
+          p.size = Math.random() * 6 + 3;
+          p.alpha = Math.random() * 0.15 + 0.05;
+          p.vx = (Math.random() - 0.5) * 0.3;
+          p.vy = -Math.random() * 0.5 - 0.2;
+        }
+        this.ctx.fillStyle = `rgba(120, 110, 100, ${p.alpha})`;
+        this.ctx.beginPath();
+        this.ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
         this.ctx.fill();
       }
     }
@@ -1333,6 +2587,14 @@ class Game {
         this.particles.spawnFireflies(15);
       } else if (sceneId === 'personal') {
         this.particles.spawnDust(20);
+      } else if (sceneId === 'time') {
+        this.particles.spawnDust(12);
+        // Smoke from train scheduled separately
+        this.particles.spawnSmoke();
+      } else if (sceneId === 'mirror') {
+        this.particles.spawnDust(8);
+      } else if (sceneId === 'lovers') {
+        this.particles.spawnDust(15);
       }
       this.particles.start();
 
@@ -1344,10 +2606,59 @@ class Game {
 
   // ---- HOTSPOT VISIBILITY (based on game state) ----
   _updateHotspots() {
-    // Hide pipe hotspot if already picked up
+    // Empire: pipe
     const pipeHs = document.getElementById('hs-pipe');
-    if (pipeHs) {
-      pipeHs.style.display = this.flags.pipeTaken ? 'none' : 'block';
+    if (pipeHs) pipeHs.style.display = this.flags.pipeTaken ? 'none' : 'block';
+
+    // Empire: update door labels based on progress
+    const doorRight = document.querySelector('[data-action="door-golconda"]');
+    if (doorRight) {
+      // After Human Condition is accessible, relabel
+    }
+
+    // Personal Values: apple visibility
+    const appleHs = document.getElementById('hs-pv-apple');
+    const appleObj = document.getElementById('pv-apple-obj');
+    if (this.flags.combShrunk && !this.flags.appleTaken) {
+      if (appleHs) appleHs.style.display = 'block';
+      if (appleObj) appleObj.classList.add('revealed');
+    } else {
+      if (appleHs) appleHs.style.display = 'none';
+      if (appleObj) appleObj.classList.remove('revealed');
+    }
+
+    // Personal Values: comb state
+    const comb = document.getElementById('pv-comb');
+    if (comb && this.flags.combShrunk) comb.classList.add('shrunk');
+
+    // Golconda: catch zone & hat taken
+    const catchZone = document.getElementById('golc-catch');
+    const catchHs = document.getElementById('hs-golc-catch');
+    if (this.flags.hatTaken) {
+      if (catchZone) catchZone.classList.remove('active');
+      if (catchHs) catchHs.style.display = 'none';
+    }
+
+    // Human Condition: easel moved, hidden door revealed
+    const easel = document.getElementById('hc-easel');
+    const hcWindow = document.getElementById('hs-hc-window');
+    const hcDoor = document.getElementById('hs-hc-door');
+    const hcDoorObj = document.getElementById('hc-door-obj');
+    if (this.flags.easelMoved) {
+      if (easel) easel.classList.add('moved');
+      if (hcWindow) hcWindow.style.display = 'block';
+      if (hcDoor) hcDoor.style.display = 'block';
+      if (hcDoorObj) hcDoorObj.classList.add('revealed');
+    }
+
+    // Mirror: crack, passage
+    const crack = document.getElementById('mr-crack');
+    const passage = document.getElementById('mr-passage');
+    const doorLovers = document.getElementById('hs-door-lovers');
+    if (this.flags.mirrorCracked) {
+      if (crack) crack.classList.add('visible');
+      if (passage) passage.classList.add('revealed');
+      if (doorLovers) doorLovers.style.display = 'block';
     }
   }
 
@@ -1392,7 +2703,9 @@ class Game {
 
   // ---- REGISTER ALL ACTIONS ----
   _registerActions() {
-    // == EMPIRE OF LIGHT ==
+    // ==============================
+    // EMPIRE OF LIGHT (Room 1)
+    // ==============================
 
     this.actions['pipe'] = () => {
       if (this.flags.pipeTaken) return;
@@ -1422,11 +2735,10 @@ class Game {
     };
 
     this.actions['sky'] = () => {
-      const lines = [
+      this.dialogue.say([
         "The sky is the bright, cheerful blue of a summer afternoon. Below it, the street is unmistakably night.",
         "You've heard of cognitive dissonance. This is atmospheric dissonance. The sky and the street have agreed to disagree."
-      ];
-      this.dialogue.say(lines);
+      ]);
     };
 
     this.actions['puddle'] = () => {
@@ -1454,9 +2766,496 @@ class Game {
       );
     };
 
+    this.actions['door-human'] = () => {
+      this.dialogue.say(
+        "Between the buildings, a narrow passage leads to a room with a window and an easel. The light here is different — it can't decide if it's inside or outside.",
+        () => this.goToScene('human')
+      );
+    };
+
     this.actions['back-empire'] = () => {
       this.goToScene('empire');
     };
+
+    // ==============================
+    // PERSONAL VALUES (Room 2)
+    // ==============================
+
+    this.actions['pv-comb'] = () => {
+      if (this.flags.combShrunk) {
+        this.dialogue.say("The comb is now a normal, sensible size. It looks almost embarrassed about its previous enormity.");
+        return;
+      }
+      this.dialogue.say([
+        "A comb the size of a wardrobe. Its teeth could rake a zen garden.",
+        "It looms with the quiet authority of something that knows it's too big for this room but has no intention of leaving.",
+        "You feel that if you could just <i>un-name</i> it \u2014 strip away the word 'comb' \u2014 it might shrink to a reasonable size. If only you had something that understood the gap between things and their names..."
+      ]);
+    };
+
+    // USE: pipe on comb -> shrinks the comb, reveals apple
+    this.actions['pipe+pv-comb'] = () => {
+      if (this.flags.combShrunk) {
+        this.dialogue.say("The comb has already been un-named. It's just a comb now. Just a thing.");
+        this.inventory.clearSelection();
+        return;
+      }
+      this.dialogue.say([
+        "You hold the not-a-pipe up to the giant comb. If a pipe can refuse its own name, perhaps a comb can too.",
+        "You whisper: <i>\"Ceci n'est pas un peigne.\"</i>",
+        "The comb shudders. It shrinks. It becomes, at last, merely a comb. Behind where it stood, something green catches your eye."
+      ], () => {
+        this.flags.combShrunk = true;
+        this.inventory.clearSelection();
+        this._updateHotspots();
+        this.audio.playSfx('pickup');
+        this._save();
+      });
+    };
+
+    this.actions['pv-apple'] = () => {
+      if (this.flags.appleTaken) return;
+      this.dialogue.say([
+        "A green apple. Perfect, luminous, the exact shade of an idea that hasn't quite ripened.",
+        "It was hiding behind the comb this whole time. You take it. It wants to be on someone's face. You can feel it."
+      ], () => {
+        this.inventory.add(this.itemDefs.apple);
+        this.flags.appleTaken = true;
+        this._updateHotspots();
+        this.audio.playSfx('pickup');
+        this._save();
+      });
+    };
+
+    this.actions['pv-glass'] = () => {
+      this.dialogue.say(
+        this.flags.glassExamined
+          ? "The giant wine glass continues to dominate the room with transparent indifference."
+          : [
+            "A wine glass the size of a bathtub. You could swim in it, if it held anything. It doesn't. It's magnificently empty.",
+            "You peer into it anyway. Your reflection stares back, distorted and enormous. For a moment, you feel like the small one."
+          ]
+      );
+      this.flags.glassExamined = true;
+    };
+
+    this.actions['pv-match'] = () => {
+      this.dialogue.say(
+        this.flags.matchExamined
+          ? "The matchstick leans with the casual menace of something that could end this room if it wanted to."
+          : [
+            "A matchstick taller than you, leaning against nothing in particular. Its red head brushes the ceiling.",
+            "You try not to think about what would happen if it were struck. The bed probably shares this concern."
+          ]
+      );
+      this.flags.matchExamined = true;
+    };
+
+    this.actions['pv-bed'] = () => {
+      this.dialogue.say(
+        this.flags.bedExamined
+          ? "The bed remains. Beds always remain. That's their job."
+          : [
+            "It's a bed. At least, it claims to be. You've learned not to trust objects in this place.",
+            "The pillow looks inviting. The blanket looks warm. Everything about it is correct and yet you can't shake the feeling it's a very detailed opinion about what a bed should be."
+          ]
+      );
+      this.flags.bedExamined = true;
+    };
+
+    // ==============================
+    // GOLCONDA (Room 3)
+    // ==============================
+
+    this.actions['golc-men'] = () => {
+      this.dialogue.say(
+        this.flags.menExamined
+          ? "They keep falling. None of them seem concerned. You're beginning to wonder if falling is just another way of standing."
+          : [
+            "Men in bowler hats, descending from the sky like dignified rain. Each one identical. Each one serene.",
+            "They look exactly like you. They all do. This is either very comforting or deeply unsettling.",
+            "One of them might be wearing a hat you could borrow. If you could just position yourself to catch one as it drifts by..."
+          ]
+      );
+      this.flags.menExamined = true;
+      // Show catch zone hint
+      const catchZone = document.getElementById('golc-catch');
+      if (catchZone && !this.flags.hatTaken) catchZone.classList.add('active');
+    };
+
+    this.actions['golc-catch'] = () => {
+      if (this.flags.hatTaken) return;
+      // Timing game: 50% chance of success, increasing with attempts
+      this.flags.catchAttempts = (this.flags.catchAttempts || 0) + 1;
+      const chance = Math.min(0.3 + this.flags.catchAttempts * 0.15, 0.9);
+      if (Math.random() < chance) {
+        this.dialogue.say([
+          "You reach up as a man drifts by. His hat lifts off — no, it was never truly his. It was always waiting for you.",
+          "It fits perfectly. Disturbingly perfectly. As if your head was always just a hat-shaped absence waiting to be filled."
+        ], () => {
+          this.inventory.add(this.itemDefs.hat);
+          this.flags.hatTaken = true;
+          this._updateHotspots();
+          this.audio.playSfx('pickup');
+          this._save();
+        });
+      } else {
+        const misses = [
+          "You reach up. A man drifts past, just out of reach. He tips an invisible hat at you. Was that sarcasm?",
+          "Almost! A bowler hat grazes your fingertips. The man who was wearing it doesn't seem to notice. Or care.",
+          "You lunge. You miss. A man floats by with the serene indifference of a cloud that happens to wear business attire.",
+          "You grab for a hat. The hat eludes you. The man it belongs to smiles gently, as if to say: timing is everything."
+        ];
+        this.dialogue.say(misses[Math.floor(Math.random() * misses.length)]);
+      }
+    };
+
+    this.actions['golc-building'] = () => {
+      this.dialogue.say(
+        "A perfectly ordinary building facade. Brick, windows, cornice. It has the quiet dignity of architecture that knows it's mostly there for context."
+      );
+    };
+
+    // ==============================
+    // THE HUMAN CONDITION (Room 4)
+    // ==============================
+
+    this.actions['hc-canvas'] = () => {
+      if (this.flags.easelMoved) {
+        this.dialogue.say("The easel stands to the side now. The canvas still shows what used to be behind it. Or what you expected to be behind it. The distinction haunts you.");
+        return;
+      }
+      if (!this.inventory.has('hat')) {
+        this.dialogue.say([
+          "An easel stands before the window. On it, a canvas shows the exact landscape visible through the glass behind it.",
+          "Where does the painting end and the world begin? You can't tell. That might be the point.",
+          "The canvas is perched high on the easel. You'd need something to reach it — something to make you taller, or at least more... <i>distinguished</i>."
+        ]);
+      } else {
+        this.dialogue.say([
+          "An easel stands before the window. The canvas is a perfect copy of the landscape behind it.",
+          "You could try to move it, but it's perched quite high..."
+        ]);
+      }
+    };
+
+    // USE: hat on canvas -> move the easel
+    this.actions['hat+hc-canvas'] = () => {
+      if (this.flags.easelMoved) {
+        this.dialogue.say("The easel has already been moved. The truth has already been revealed. You can't un-see what's behind the painting.");
+        this.inventory.clearSelection();
+        return;
+      }
+      this.dialogue.say([
+        "You put on the bowler hat. It adds precisely the inch of height and authority you needed.",
+        "You reach up and slide the canvas aside. The easel rolls obediently to the right.",
+        "Behind the canvas, the landscape is subtly different. There's a door in the hillside that wasn't in the painting. The painting showed you what you expected to see. Reality had other plans."
+      ], () => {
+        this.flags.easelMoved = true;
+        this.inventory.clearSelection();
+        this._updateHotspots();
+        this.audio.playSfx('pickup');
+        this._save();
+      });
+    };
+
+    this.actions['hc-window'] = () => {
+      this.dialogue.say("Through the window, the landscape breathes. It's subtly different from the painting — more alive, less composed. There's a small door in the hillside that the canvas never mentioned.");
+    };
+
+    this.actions['hc-hidden-door'] = () => {
+      this.dialogue.say(
+        "A door in the landscape that the painting chose not to show you. What else has art been hiding?",
+        () => this.goToScene('time')
+      );
+    };
+
+    this.actions['back-human'] = () => {
+      this.goToScene('human');
+    };
+
+    // ==============================
+    // TIME TRANSFIXED (Room 5)
+    // ==============================
+
+    this.actions['tt-train'] = () => {
+      if (this.flags.trainCompartmentOpen) {
+        this.dialogue.say("The train's compartment hangs open. It has given you everything it had. Which was one letter and several questions.");
+      } else {
+        this.dialogue.say(
+          this.flags.trainExamined
+            ? "The locomotive remains frozen mid-emergence. It is simultaneously arriving and never arriving. You know the feeling."
+            : [
+              "A steam locomotive protrudes from the fireplace as if the mantle were a tunnel. It is frozen in the act of arriving.",
+              "The metal is warm. Not from the fire — the fireplace is cold. The warmth comes from somewhere the train remembers but hasn't reached yet.",
+              "There's a small compartment on the side. It has a slot shaped like... well, it could be anything. But it looks hungry."
+            ]
+        );
+      }
+      this.flags.trainExamined = true;
+    };
+
+    // USE: apple on train -> feed the compartment, get letter
+    this.actions['apple+tt-train'] = () => {
+      if (this.flags.trainCompartmentOpen) {
+        this.dialogue.say("The compartment has already been fed. It's sated. As sated as a train emerging from a fireplace can be.");
+        this.inventory.clearSelection();
+        return;
+      }
+      this.dialogue.say([
+        "You hold the green apple up to the train's compartment. The slot accepts it with a soft click, like a tongue finding the right word.",
+        "The compartment opens. Inside, there is a single letter. The envelope is warm. The handwriting is yours.",
+        "It's addressed to someone whose name keeps changing when you look away. You take it."
+      ], () => {
+        this.inventory.remove('apple');
+        this.inventory.add(this.itemDefs.letter);
+        this.flags.trainCompartmentOpen = true;
+        this.inventory.clearSelection();
+        this.audio.playSfx('pickup');
+        this._save();
+      });
+    };
+
+    this.actions['tt-fireplace'] = () => {
+      this.dialogue.say(
+        this.flags.fireplaceExamined
+          ? "The fireplace continues to birth a locomotive. Neither of them seems fazed by the arrangement."
+          : [
+            "The fireplace is ornate, Victorian, and completely occupied by a train. There is no fire. There hasn't been one in some time.",
+            "You wonder where the train is coming from. You wonder where it's going. You suspect the answer to both is: here."
+          ]
+      );
+      this.flags.fireplaceExamined = true;
+    };
+
+    this.actions['tt-clock'] = () => {
+      this.dialogue.say(
+        this.flags.clockExamined
+          ? "The clock still says twelve-thirty. Or maybe six-o'clock-ish. Depends on which hand you trust, and you trust neither."
+          : [
+            "A clock on the mantle. Its hands point to a time that doesn't exist — somewhere between always and not yet.",
+            "It's ticking. You can hear it. But the hands aren't moving. It's keeping time with something, just not <i>this</i> time."
+          ]
+      );
+      this.flags.clockExamined = true;
+    };
+
+    this.actions['tt-mirror'] = () => {
+      this.dialogue.say("A small mirror on the wall. In it, you see the room reflected — train, fireplace, clock. Everything in its wrong place.");
+    };
+
+    this.actions['door-mirror'] = () => {
+      if (!this.flags.trainCompartmentOpen) {
+        this.dialogue.say("The door is locked. Through its keyhole, you see only darkness and the faint scent of glass.");
+        return;
+      }
+      this.dialogue.say(
+        "The door opens. The room beyond smells of silver and old questions.",
+        () => this.goToScene('mirror')
+      );
+    };
+
+    // ==============================
+    // NOT TO BE REPRODUCED (Room 6)
+    // ==============================
+
+    this.actions['mr-mirror'] = () => {
+      if (this.flags.mirrorCracked) {
+        this.dialogue.say("The mirror is cracked. Through the cracks, a dark passage beckons. The back of your head watches you go.");
+        return;
+      }
+      this.dialogue.say(
+        this.flags.mirrorExamined
+          ? "The mirror still shows the back of your head. You turn around. So does the reflection. You are always one rotation behind yourself."
+          : [
+            "You look into the mirror. It shows you the back of your head. A bowler hat. Brown hair underneath. The collar of your coat.",
+            "You turn around. The reflection turns too. Still the back of your head. You are, it seems, unable to face yourself.",
+            "This would be terrifying if it weren't so on-brand for this place."
+          ]
+      );
+      this.flags.mirrorExamined = true;
+    };
+
+    this.actions['mr-shelf'] = () => {
+      if (this.flags.mirrorCracked) {
+        this.dialogue.say("The shelf holds a book and the memory of a letter that changed everything.");
+      } else {
+        this.dialogue.say("A narrow shelf beneath the mirror. There's space for something to rest here. Something the mirror might want to read.");
+      }
+    };
+
+    this.actions['mr-book'] = () => {
+      this.dialogue.say(
+        this.flags.bookRead
+          ? "The book. You've read it. It was about a man who looked into a mirror and saw everyone except himself."
+          : [
+            "A slim, red book. You open it. The pages are blank except for a single sentence on page one:",
+            "<i>\"The mirror does not show you who you are. It shows you who you are not yet brave enough to be.\"</i>",
+            "You close the book. It feels heavier now."
+          ]
+      );
+      this.flags.bookRead = true;
+    };
+
+    // USE: letter on mirror -> reveal the name, crack the mirror
+    this.actions['letter+mr-mirror'] = () => {
+      if (this.flags.mirrorCracked) {
+        this.dialogue.say("The mirror is already cracked. The letter has done its work.");
+        this.inventory.clearSelection();
+        return;
+      }
+      this.dialogue.say([
+        "You hold the love letter up to the mirror. The mirror, which cannot show your face, reads the letter in reverse.",
+        "The reflected text resolves. The name of the addressee, scrambled and hidden in your own handwriting, becomes clear.",
+        "It's your name. You wrote a love letter to yourself.",
+        "That's either the saddest or the most radical act of self-acceptance you've ever committed.",
+        "The mirror, confronted with a truth it cannot reflect away, <i>cracks</i>. Behind the fractured glass: a passage, dark and warm."
+      ], () => {
+        this.flags.mirrorCracked = true;
+        this.inventory.remove('letter');
+        this.inventory.clearSelection();
+        this._updateHotspots();
+        this.audio.playSfx('pickup');
+        this._save();
+      });
+    };
+
+    // Also allow using letter on the shelf
+    this.actions['letter+mr-shelf'] = () => {
+      this.actions['letter+mr-mirror']();
+    };
+
+    this.actions['door-lovers'] = () => {
+      this.dialogue.say([
+        "You step through the cracked mirror into the passage beyond.",
+        "The air changes. It becomes warmer, softer, like the space between two people who haven't yet decided whether to speak."
+      ], () => this.goToScene('lovers'));
+    };
+
+    this.actions['back-time'] = () => {
+      this.goToScene('time');
+    };
+
+    // ==============================
+    // THE LOVERS (Room 7 — Final)
+    // ==============================
+
+    this.actions['lv-left'] = () => {
+      if (this.flags.loversStarted) return;
+      this.dialogue.say([
+        "The figure on the left wears a dark suit. A white cloth covers their face entirely. They lean slightly forward, as if about to whisper.",
+        "Something about their posture is familiar. The slope of the shoulders. The way they hold their hands. You know this person.",
+        "You know this person because this person is you."
+      ], () => {
+        // Reveal left face
+        document.getElementById('lv-cloth-left').style.display = 'none';
+        document.getElementById('lv-face-left').classList.add('revealed');
+        document.getElementById('lv-cloth-overlay-left').classList.add('removed');
+        this.flags.leftRevealed = true;
+
+        setTimeout(() => {
+          this.dialogue.say([
+            "Your face stares back at you from beneath the cloth. Of course it does.",
+            "The other figure stands beside you, still veiled. Still unknown. Still leaning toward you.",
+            "You could lift their cloth too. Or you could leave the mystery intact."
+          ], () => {
+            this.flags.loversStarted = true;
+            document.getElementById('lv-choice').classList.add('visible');
+          });
+        }, 800);
+      });
+    };
+
+    this.actions['lv-right'] = () => {
+      if (this.flags.loversStarted) return;
+      this.dialogue.say(
+        "The other figure. They wear a red dress or jacket — the color of something remembered, not seen. A white cloth hides their face. They lean toward you with the patience of someone who has been waiting a very long time.",
+        () => {
+          if (!this.flags.leftRevealed) {
+            this.dialogue.say("But first, you should look at the other figure. The one you already know.");
+          }
+        }
+      );
+    };
+
+    // Choice buttons handled separately
+    this._setupLoversChoice();
+  }
+
+  _setupLoversChoice() {
+    const btnLift = document.getElementById('lv-btn-lift');
+    const btnLeave = document.getElementById('lv-btn-leave');
+
+    if (btnLift) {
+      btnLift.addEventListener('click', () => {
+        document.getElementById('lv-choice').classList.remove('visible');
+        document.getElementById('lv-cloth-right').style.display = 'none';
+        document.getElementById('lv-face-right').classList.add('revealed');
+        document.getElementById('lv-cloth-overlay-right').classList.add('removed');
+
+        this.dialogue.say([
+          "You lift the cloth.",
+          "Underneath: your face. Again. The same eyes. The same tentative mouth.",
+          "Of course. Every person you've ever loved was a mirror you hadn't learned to read yet.",
+          "The two of you stand face to face to face to face. An infinity of recognition."
+        ], () => {
+          this._startEnding();
+        });
+      });
+    }
+
+    if (btnLeave) {
+      btnLeave.addEventListener('click', () => {
+        document.getElementById('lv-choice').classList.remove('visible');
+
+        this.dialogue.say([
+          "You leave the cloth where it is.",
+          "Some mysteries are kinder left unsolved. The cloth isn't hiding something from you — it's protecting something for you.",
+          "The veiled figure leans closer. You feel the warmth of a face you'll never see. And somehow, that's enough.",
+          "It was always enough."
+        ], () => {
+          this._startEnding();
+        });
+      });
+    }
+  }
+
+  _startEnding() {
+    // Museum zoom-out ending
+    setTimeout(() => {
+      document.getElementById('museum-frame').classList.add('visible');
+      this.audio.stopAmbient(3);
+
+      // Play final tone
+      if (this.audio.initialized) {
+        const now = this.audio.ctx.currentTime;
+        [220, 277.2, 330, 440].forEach((freq, i) => {
+          const osc = this.audio.ctx.createOscillator();
+          osc.type = 'sine';
+          osc.frequency.value = freq;
+          const g = this.audio.ctx.createGain();
+          g.gain.setValueAtTime(0, now + i * 0.3);
+          g.gain.linearRampToValueAtTime(0.04, now + i * 0.3 + 0.5);
+          g.gain.linearRampToValueAtTime(0.02, now + 8);
+          g.gain.exponentialRampToValueAtTime(0.001, now + 12);
+          osc.connect(g); g.connect(this.audio.master);
+          osc.start(now + i * 0.3); osc.stop(now + 12);
+        });
+      }
+
+      // Fade the dialogue in with final text after a pause
+      setTimeout(() => {
+        this.dialogue.say([
+          "<i>You step back. The frame becomes visible. The placard appears below.</i>",
+          "<i>You realize you have been inside a painting in a museum. Or perhaps the museum is inside the painting.</i>",
+          "<i>A small figure stands in the gallery, looking at the work. They look like you. They are wearing a bowler hat.</i>",
+          "<i>Thank you for playing. Or for being played. The distinction, as always, is unimportant.</i>"
+        ], () => {
+          this.flags.gameComplete = true;
+          this._save();
+        });
+      }, 3000);
+    }, 1000);
   }
 
   // ---- INVENTORY CLICK ----
