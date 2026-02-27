@@ -1337,16 +1337,21 @@ html, body {
   box-shadow: 0 4px 20px rgba(0,0,0,0.4), inset 0 0 0 2px #7a6a5a;
   z-index: 30;
   opacity: 0;
-  transition: opacity 2s ease;
+  transition: opacity 2s ease, inset 4s ease;
   pointer-events: none;
 }
 .museum-frame.visible { opacity: 1; }
+.museum-frame.zoomed-out { inset: 20% 25%; }
 .museum-placard {
   position: absolute; bottom: -60px; left: 50%; transform: translateX(-50%);
   background: #f0e8d8;
   padding: 8px 20px;
   border: 1px solid #d0c8b8;
   text-align: center;
+  opacity: 0;
+  transition: opacity 1.5s ease;
+}
+.museum-frame.visible .museum-placard { opacity: 1; transition-delay: 2s; }
   white-space: nowrap;
 }
 .museum-placard .title {
@@ -1358,6 +1363,177 @@ html, body {
   color: #6a6a6a;
   font-size: 0.7rem;
   margin-top: 2px;
+}
+
+/* Museum wall background (visible during zoom-out) */
+.museum-wall {
+  position: absolute; inset: 0;
+  background: #e8e0d0;
+  z-index: 29;
+  opacity: 0;
+  transition: opacity 3s ease;
+  pointer-events: none;
+}
+.museum-wall.visible { opacity: 1; }
+.museum-wall::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 120px,
+    rgba(0,0,0,0.02) 120px,
+    rgba(0,0,0,0.02) 121px
+  );
+}
+
+/* Gallery figure silhouette */
+.gallery-figure {
+  position: absolute;
+  bottom: 8%;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 31;
+  opacity: 0;
+  transition: opacity 3s ease;
+  pointer-events: none;
+}
+.gallery-figure.visible { opacity: 1; }
+.gallery-figure-body {
+  width: 24px;
+  height: 50px;
+  background: #1a1a2a;
+  border-radius: 4px 4px 0 0;
+  margin: 0 auto;
+}
+.gallery-figure-head {
+  width: 14px;
+  height: 14px;
+  background: #1a1a2a;
+  border-radius: 50%;
+  margin: 0 auto 2px;
+}
+.gallery-figure-hat {
+  width: 20px;
+  height: 6px;
+  background: #1a1a2a;
+  border-radius: 2px 2px 0 0;
+  margin: 0 auto 0;
+  position: relative;
+}
+.gallery-figure-hat::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: -4px;
+  width: 28px;
+  height: 2px;
+  background: #1a1a2a;
+  border-radius: 1px;
+}
+
+/* Credits overlay */
+.credits-overlay {
+  position: absolute; inset: 0;
+  background: rgba(10,14,26,0.0);
+  z-index: 300;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 2s ease, background 3s ease;
+}
+.credits-overlay.visible {
+  opacity: 1;
+  pointer-events: auto;
+  background: rgba(10,14,26,0.95);
+}
+.credits-content {
+  text-align: center;
+  color: #c9a96e;
+  max-width: 500px;
+  padding: 2rem;
+}
+.credits-title {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 1.6rem;
+  font-style: italic;
+  margin-bottom: 2rem;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 1.5s ease, transform 1.5s ease;
+}
+.credits-overlay.visible .credits-title {
+  opacity: 1;
+  transform: translateY(0);
+}
+.credits-section {
+  margin-bottom: 1.5rem;
+  opacity: 0;
+  transform: translateY(15px);
+  transition: opacity 1.2s ease, transform 1.2s ease;
+}
+.credits-overlay.visible .credits-section:nth-child(2) { transition-delay: 1s; opacity: 1; transform: translateY(0); }
+.credits-overlay.visible .credits-section:nth-child(3) { transition-delay: 2.5s; opacity: 1; transform: translateY(0); }
+.credits-overlay.visible .credits-section:nth-child(4) { transition-delay: 4s; opacity: 1; transform: translateY(0); }
+.credits-overlay.visible .credits-section:nth-child(5) { transition-delay: 5.5s; opacity: 1; transform: translateY(0); }
+.credits-overlay.visible .credits-section:nth-child(6) { transition-delay: 7s; opacity: 1; transform: translateY(0); }
+.credits-overlay.visible .credits-section:nth-child(7) { transition-delay: 8.5s; opacity: 1; transform: translateY(0); }
+.credits-label {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 3px;
+  color: #8a7a5e;
+  margin-bottom: 0.3rem;
+}
+.credits-value {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 0.95rem;
+  font-style: italic;
+  color: #d4c4a0;
+  line-height: 1.6;
+}
+.credits-divider {
+  width: 60px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #c9a96e, transparent);
+  margin: 2rem auto;
+  opacity: 0;
+  transition: opacity 1.5s ease;
+}
+.credits-overlay.visible .credits-divider { opacity: 1; transition-delay: 6.5s; }
+
+/* Post-credits and new game */
+.credits-postscript {
+  margin-top: 1.5rem;
+  font-size: 0.75rem;
+  color: #6a5a40;
+  font-style: italic;
+  opacity: 0;
+  transition: opacity 2s ease;
+}
+.credits-overlay.visible .credits-postscript { opacity: 1; transition-delay: 10s; }
+
+.new-game-btn {
+  margin-top: 2rem;
+  padding: 8px 28px;
+  background: transparent;
+  border: 1px solid #c9a96e;
+  color: #c9a96e;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 0.8rem;
+  font-style: italic;
+  letter-spacing: 1px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 1.5s ease, background 0.3s, color 0.3s;
+}
+.credits-overlay.visible .new-game-btn { opacity: 1; transition-delay: 11s; }
+.new-game-btn:hover {
+  background: #c9a96e;
+  color: #0a0e1a;
 }
 
 /* ============================================================
@@ -2068,6 +2244,55 @@ html, body {
       </div>
     </div>
 
+  </div>
+
+  <!-- Museum wall (shows during ending zoom-out) -->
+  <div class="museum-wall" id="museum-wall"></div>
+
+  <!-- Gallery figure silhouette -->
+  <div class="gallery-figure" id="gallery-figure">
+    <div class="gallery-figure-hat"></div>
+    <div class="gallery-figure-head"></div>
+    <div class="gallery-figure-body"></div>
+  </div>
+
+  <!-- Credits overlay -->
+  <div class="credits-overlay" id="credits-overlay">
+    <div class="credits-content">
+      <div class="credits-title">Ceci N'est Pas Un Jeu</div>
+      <div class="credits-section">
+        <div class="credits-label">Inspired by</div>
+        <div class="credits-value">Ren&eacute; Magritte<br><span style="font-size:0.75rem;color:#8a7a5e">(1898 &ndash; 1967)</span></div>
+      </div>
+      <div class="credits-section">
+        <div class="credits-label">Paintings referenced</div>
+        <div class="credits-value">
+          The Empire of Light &middot; Personal Values<br>
+          Golconda &middot; The Human Condition<br>
+          The Discovery of Fire &middot; Time Transfixed<br>
+          Not to Be Reproduced &middot; The Lovers
+        </div>
+      </div>
+      <div class="credits-section">
+        <div class="credits-label">Written &amp; built by</div>
+        <div class="credits-value">A human and an owl</div>
+      </div>
+      <div class="credits-divider"></div>
+      <div class="credits-section">
+        <div class="credits-value" style="font-size:0.8rem;color:#8a7a5e">
+          &ldquo;Everything we see hides another thing.<br>
+          We always want to see what is hidden<br>
+          by what we see.&rdquo;
+        </div>
+        <div class="credits-label" style="margin-top:0.5rem">&mdash; Ren&eacute; Magritte</div>
+      </div>
+      <div class="credits-section">
+        <div class="credits-postscript" id="credits-postscript">
+          This was not a game. You were the painting all along.
+        </div>
+      </div>
+      <button class="new-game-btn" id="new-game-btn">Begin again</button>
+    </div>
   </div>
 
   <!-- FX Canvas -->
@@ -3919,41 +4144,109 @@ class Game {
   }
 
   _startEnding() {
-    // Museum zoom-out ending
+    // Staged museum reveal
+
+    // Stage 1: Silence. Hotspots off.
+    document.querySelectorAll('.scene.active .hotspot').forEach(h => h.style.pointerEvents = 'none');
+    document.getElementById('inventory-bar').style.opacity = '0';
+    this.audio.stopAmbient(3);
+
+    // Stage 2: Museum wall fades in behind scene
+    setTimeout(() => {
+      document.getElementById('museum-wall').classList.add('visible');
+    }, 800);
+
+    // Stage 3: Frame appears
     setTimeout(() => {
       document.getElementById('museum-frame').classList.add('visible');
-      this.audio.stopAmbient(3);
 
-      // Play final tone
+      // Play final chord — A minor 7 (contemplative, not triumphant)
       if (this.audio.initialized) {
         const now = this.audio.ctx.currentTime;
-        [220, 277.2, 330, 440].forEach((freq, i) => {
+        [220, 261.6, 330, 392].forEach((freq, i) => {
           const osc = this.audio.ctx.createOscillator();
           osc.type = 'sine';
           osc.frequency.value = freq;
           const g = this.audio.ctx.createGain();
-          g.gain.setValueAtTime(0, now + i * 0.3);
-          g.gain.linearRampToValueAtTime(0.04, now + i * 0.3 + 0.5);
-          g.gain.linearRampToValueAtTime(0.02, now + 8);
-          g.gain.exponentialRampToValueAtTime(0.001, now + 12);
+          g.gain.setValueAtTime(0, now + i * 0.4);
+          g.gain.linearRampToValueAtTime(0.035, now + i * 0.4 + 0.8);
+          g.gain.linearRampToValueAtTime(0.02, now + 10);
+          g.gain.exponentialRampToValueAtTime(0.001, now + 16);
           osc.connect(g); g.connect(this.audio.master);
-          osc.start(now + i * 0.3); osc.stop(now + 12);
+          osc.start(now + i * 0.4); osc.stop(now + 16);
         });
       }
+    }, 2500);
 
-      // Fade the dialogue in with final text after a pause
-      setTimeout(() => {
-        this.dialogue.say([
-          "<i>You step back. The frame becomes visible. The placard appears below.</i>",
-          "<i>You realize you have been inside a painting in a museum. Or perhaps the museum is inside the painting.</i>",
-          "<i>A small figure stands in the gallery, looking at the work. They look like you. They are wearing a bowler hat.</i>",
-          "<i>Thank you for playing. Or for being played. The distinction, as always, is unimportant.</i>"
-        ], () => {
-          this.flags.gameComplete = true;
-          this._save();
+    // Stage 4: Frame shrinks (zoom out effect)
+    setTimeout(() => {
+      document.getElementById('museum-frame').classList.add('zoomed-out');
+    }, 4500);
+
+    // Stage 5: Gallery figure appears
+    setTimeout(() => {
+      document.getElementById('gallery-figure').classList.add('visible');
+    }, 6000);
+
+    // Stage 6: Final narration
+    setTimeout(() => {
+      this.dialogue.say([
+        "<i>You step back. Or perhaps you were always standing here.</i>",
+        "<i>The frame becomes visible. A placard. A painting. A room in a museum you do not remember entering.</i>",
+        "<i>A small figure stands in the gallery, studying the work. They are wearing a bowler hat.</i>",
+        "<i>They look exactly like you. They look exactly like everyone.</i>",
+      ], () => {
+        // Stage 7: final beat, then credits
+        setTimeout(() => {
+          this.dialogue.say(
+            "<i>The figure turns and walks away. The museum closes. The painting remains.</i>",
+            () => {
+              this.flags.gameComplete = true;
+              this._save();
+              this._showCredits();
+            }
+          );
+        }, 1500);
+      });
+    }, 7500);
+  }
+
+  _showCredits() {
+    // Fade gallery figure out
+    setTimeout(() => {
+      document.getElementById('gallery-figure').classList.remove('visible');
+    }, 500);
+
+    // Bring up credits
+    setTimeout(() => {
+      document.getElementById('credits-overlay').classList.add('visible');
+      document.getElementById('dialogue-box').style.opacity = '0';
+
+      // Play soft credits music — descending notes
+      if (this.audio.initialized) {
+        const now = this.audio.ctx.currentTime;
+        [440, 392, 349.2, 330, 293.7, 261.6].forEach((freq, i) => {
+          const osc = this.audio.ctx.createOscillator();
+          osc.type = 'sine';
+          const g = this.audio.ctx.createGain();
+          g.gain.setValueAtTime(0, now + i * 2);
+          g.gain.linearRampToValueAtTime(0.025, now + i * 2 + 0.6);
+          g.gain.linearRampToValueAtTime(0, now + i * 2 + 3.5);
+          osc.frequency.value = freq;
+          osc.connect(g); g.connect(this.audio.master);
+          osc.start(now + i * 2); osc.stop(now + i * 2 + 4);
         });
-      }, 3000);
-    }, 1000);
+      }
+    }, 1500);
+
+    // Wire up new game button
+    const btn = document.getElementById('new-game-btn');
+    if (btn) {
+      btn.addEventListener('click', () => {
+        this.clearSave();
+        location.reload();
+      });
+    }
   }
 
   // ---- INVENTORY CLICK ----
