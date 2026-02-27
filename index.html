@@ -150,6 +150,11 @@ html, body {
   transition: filter 0.2s;
 }
 .hotspot:hover { filter: brightness(1.2) drop-shadow(0 0 8px rgba(201,169,110,0.4)); }
+/* Cursor changes when item is selected */
+.item-selected .hotspot { cursor: crosshair; }
+.item-selected .hotspot:hover {
+  filter: brightness(1.3) drop-shadow(0 0 12px rgba(201,169,110,0.6));
+}
 .hotspot-label {
   position: absolute;
   bottom: calc(100% + 6px);
@@ -1356,6 +1361,126 @@ html, body {
 }
 
 /* ============================================================
+   IDLE ANIMATIONS — subtle life in every scene
+   ============================================================ */
+
+/* Empire of Light: window glow pulse */
+.building .window {
+  animation: window-glow 4s ease-in-out infinite alternate;
+}
+.building .window:nth-child(2n) { animation-delay: -1.5s; }
+.building .window:nth-child(3n) { animation-delay: -3s; }
+@keyframes window-glow {
+  0% { opacity: 0.5; }
+  100% { opacity: 0.8; }
+}
+
+/* Empire: puddle shimmer */
+.puddle {
+  animation: puddle-shimmer 5s ease-in-out infinite alternate;
+}
+@keyframes puddle-shimmer {
+  0% { opacity: 0.8; transform: scaleX(1); }
+  100% { opacity: 1; transform: scaleX(1.05); }
+}
+
+/* Personal Values: giant glass light refraction */
+.glass-bowl {
+  animation: glass-gleam 6s ease-in-out infinite alternate;
+}
+@keyframes glass-gleam {
+  0% { box-shadow: inset 0 -20px 40px rgba(180,200,220,0.1); }
+  100% { box-shadow: inset 0 -20px 40px rgba(200,220,240,0.2), inset 10px -10px 30px rgba(255,255,255,0.08); }
+}
+
+/* Personal Values: match head glow */
+.match-head {
+  animation: match-pulse 3s ease-in-out infinite alternate;
+}
+@keyframes match-pulse {
+  0% { box-shadow: 0 0 5px rgba(200,50,50,0.2); }
+  100% { box-shadow: 0 0 12px rgba(200,50,50,0.4); }
+}
+
+/* Golconda: subtle building shadow */
+.golc-building {
+  animation: building-breathe 8s ease-in-out infinite alternate;
+}
+@keyframes building-breathe {
+  0% { box-shadow: inset 0 0 30px rgba(0,0,0,0.1); }
+  100% { box-shadow: inset 0 0 50px rgba(0,0,0,0.15); }
+}
+
+/* Human Condition: curtain sway */
+.hc-curtain {
+  animation: curtain-sway 7s ease-in-out infinite alternate;
+  transform-origin: top center;
+}
+.hc-curtain-r { animation-delay: -3s; }
+@keyframes curtain-sway {
+  0% { transform: skewX(0deg); }
+  100% { transform: skewX(0.5deg); }
+}
+
+/* Time Transfixed: train light pulse */
+.train-light {
+  animation: train-light-pulse 2s ease-in-out infinite alternate;
+}
+@keyframes train-light-pulse {
+  0% { box-shadow: 0 0 10px 4px rgba(255,255,200,0.3); }
+  100% { box-shadow: 0 0 15px 6px rgba(255,255,200,0.5); }
+}
+
+/* Time Transfixed: clock pendulum feel (subtle hand drift) */
+.clock-hand-m {
+  animation: minute-drift 60s linear infinite;
+}
+@keyframes minute-drift {
+  0% { transform: rotate(180deg); }
+  100% { transform: rotate(180deg); } /* Stuck clock - hands don't move */
+}
+
+/* Mirror room: reflection subtle shift */
+.mr-reflection {
+  animation: reflection-drift 10s ease-in-out infinite alternate;
+}
+@keyframes reflection-drift {
+  0% { transform: translateX(-50%) translateY(0); }
+  100% { transform: translateX(-50%) translateY(2px); }
+}
+
+/* Lovers: figures lean toward each other */
+.lv-figure-left {
+  animation: lean-right 6s ease-in-out infinite alternate;
+}
+.lv-figure-right {
+  animation: lean-left 6s ease-in-out infinite alternate;
+  animation-delay: -1s;
+}
+@keyframes lean-right {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(1.5deg); }
+}
+@keyframes lean-left {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(-1.5deg); }
+}
+
+/* Fire room: tuba gleam */
+.tuba-bell {
+  animation: tuba-gleam 3s ease-in-out infinite alternate;
+}
+@keyframes tuba-gleam {
+  0% { box-shadow: inset 0 -10px 20px rgba(0,0,0,0.3), 0 0 30px rgba(200,160,60,0.2); }
+  100% { box-shadow: inset 0 -10px 20px rgba(0,0,0,0.3), 0 0 50px rgba(255,180,60,0.35); }
+}
+
+/* Scene transitions: overlay for brush wipe */
+#fx-canvas {
+  z-index: 200; /* Ensure above scenes during transition */
+}
+
+/* ============================================================
    PARALLAX (mouse-driven depth)
    ============================================================ */
 .parallax-layer {
@@ -1632,17 +1757,17 @@ html, body {
       <div class="golc-catch-zone" id="golc-catch"></div>
 
       <!-- Hotspots -->
+      <div class="hotspot" data-action="golc-building"
+           style="left:15%; bottom:12%; width:70%; height:20%;">
+        <div class="hotspot-label">Building facade</div>
+      </div>
       <div class="hotspot" data-action="golc-men"
-           style="left:20%; top:10%; width:60%; height:40%;">
+           style="left:10%; top:5%; width:80%; height:45%;">
         <div class="hotspot-label">Falling men</div>
       </div>
       <div class="hotspot" data-action="golc-catch" id="hs-golc-catch"
-           style="left:44%; bottom:13%; width:12%; height:10%;">
+           style="left:38%; bottom:14%; width:24%; height:12%; z-index:15;">
         <div class="hotspot-label">Stand here</div>
-      </div>
-      <div class="hotspot" data-action="golc-building"
-           style="left:15%; bottom:12%; width:70%; height:25%;">
-        <div class="hotspot-label">Building facade</div>
       </div>
       <div class="hotspot" data-action="back-empire"
            style="left:0%; bottom:0%; width:10%; height:12%;">
@@ -2649,6 +2774,8 @@ class Inventory {
       this.selected = id;
     }
     this.render();
+    // Toggle cursor class on game container
+    document.getElementById('game').classList.toggle('item-selected', !!this.selected);
     return this.selected;
   }
 
@@ -2659,6 +2786,7 @@ class Inventory {
   clearSelection() {
     this.selected = null;
     this.render();
+    document.getElementById('game').classList.remove('item-selected');
   }
 
   render() {
@@ -2847,12 +2975,15 @@ class Game {
 
     if (!newScene) { this.transitioning = false; return; }
 
-    if (!immediate) this.audio.playSfx('transition');
+    if (!immediate) {
+      this.audio.playSfx('transition');
+      this._brushWipe();
+    }
 
     // Fade out old
     if (oldScene) oldScene.classList.remove('active');
 
-    const delay = immediate ? 50 : 600;
+    const delay = immediate ? 50 : 900;
     setTimeout(() => {
       newScene.classList.add('active');
       this.currentScene = sceneId;
@@ -2881,7 +3012,100 @@ class Game {
       this._updateHotspots();
       this._save();
       this.transitioning = false;
+
+      // First-visit narration for each room
+      if (!immediate) this._sceneEntryNarration(sceneId);
     }, delay);
+  }
+
+  // ---- BRUSH WIPE TRANSITION ----
+  _brushWipe() {
+    const c = document.getElementById('fx-canvas');
+    const ctx = c.getContext('2d');
+    const w = c.width, h = c.height;
+    let progress = 0;
+
+    const wipe = () => {
+      progress += 0.045;
+      if (progress > 1.3) {
+        // Clear
+        setTimeout(() => {
+          let fade = 1;
+          const fadeOut = () => {
+            fade -= 0.06;
+            if (fade <= 0) {
+              ctx.clearRect(0, 0, w, h);
+              return;
+            }
+            ctx.globalAlpha = fade;
+            ctx.fillStyle = '#0a0e1a';
+            ctx.fillRect(0, 0, w, h);
+            ctx.globalAlpha = 1;
+            requestAnimationFrame(fadeOut);
+          };
+          fadeOut();
+        }, 100);
+        return;
+      }
+
+      ctx.save();
+      ctx.globalAlpha = 1;
+
+      // Paint multiple brush strokes sweeping across
+      const strokes = 5;
+      for (let i = 0; i < strokes; i++) {
+        const yCenter = (h / strokes) * (i + 0.5);
+        const strokeH = h / strokes + 40;
+        const x = (progress - i * 0.04) * (w + 200) - 100;
+
+        ctx.fillStyle = '#0a0e1a';
+        ctx.beginPath();
+        // Wavy brush stroke shape
+        ctx.moveTo(x - 120, yCenter - strokeH / 2);
+        for (let px = -120; px <= 120; px += 10) {
+          const wobble = Math.sin(px * 0.05 + i * 2) * 15;
+          ctx.lineTo(x + px, yCenter - strokeH / 2 + wobble);
+        }
+        for (let px = 120; px >= -120; px -= 10) {
+          const wobble = Math.sin(px * 0.05 + i * 2 + 1) * 15;
+          ctx.lineTo(x + px, yCenter + strokeH / 2 + wobble);
+        }
+        ctx.closePath();
+        ctx.fill();
+      }
+
+      ctx.restore();
+      requestAnimationFrame(wipe);
+    };
+    wipe();
+  }
+
+  // ---- SCENE ENTRY NARRATION ----
+  _sceneEntryNarration(sceneId) {
+    const visitKey = `visited_${sceneId}`;
+    if (this.flags[visitKey]) return; // Only first visit
+    this.flags[visitKey] = true;
+
+    const entries = {
+      personal: "A bedroom. Or something's idea of a bedroom. The furniture has ambitions far beyond its station.",
+      golconda: "You step outside \u2014 or is it inside? Men fall from the sky like polite meteorites. No one seems alarmed.",
+      human: "A room with a window and an easel. The painting on the canvas matches the view so perfectly that the boundary between art and reality has filed for divorce.",
+      fire: [
+        "The smell hits you first. Not smoke \u2014 something warmer. The air tastes of brass and ambition.",
+        "A stage. A tuba. The tuba is on fire. You wait for this to start making sense. It doesn't. You proceed."
+      ],
+      time: "A Victorian parlour. A fireplace. And emerging from it \u2014 frozen mid-arrival, like a guest who can't commit to entering \u2014 a locomotive.",
+      mirror: "A quiet room. An ornate mirror dominates the far wall. You approach it with the confidence of someone who has already seen several impossible things today.",
+      lovers: "The room is soft. The light is kind. Two figures stand before you, their faces draped in white cloth, leaning toward each other like two questions waiting for the same answer.",
+    };
+
+    if (entries[sceneId]) {
+      setTimeout(() => {
+        if (!this.dialogue.isActive()) {
+          this.dialogue.say(entries[sceneId]);
+        }
+      }, 400);
+    }
   }
 
   // ---- HOTSPOT VISIBILITY (based on game state) ----
@@ -3260,13 +3484,17 @@ class Game {
     // ==============================
 
     this.actions['golc-men'] = () => {
+      if (this.flags.hatTaken) {
+        this.dialogue.say("They keep falling. None of them seem concerned. You're beginning to wonder if falling is just another way of standing.");
+        return;
+      }
       this.dialogue.say(
         this.flags.menExamined
-          ? "They keep falling. None of them seem concerned. You're beginning to wonder if falling is just another way of standing."
+          ? ["They drift past, unhurried and identical. One of them will drop a hat if you stand in the right spot below."]
           : [
             "Men in bowler hats, descending from the sky like dignified rain. Each one identical. Each one serene.",
             "They look exactly like you. They all do. This is either very comforting or deeply unsettling.",
-            "One of them might be wearing a hat you could borrow. If you could just position yourself to catch one as it drifts by..."
+            "One of them is going to lose his hat. You can see it \u2014 it's sitting at a jaunty, precarious angle. If you stand below him, you could catch it."
           ]
       );
       this.flags.menExamined = true;
@@ -3277,29 +3505,22 @@ class Game {
 
     this.actions['golc-catch'] = () => {
       if (this.flags.hatTaken) return;
-      // Timing game: 50% chance of success, increasing with attempts
-      this.flags.catchAttempts = (this.flags.catchAttempts || 0) + 1;
-      const chance = Math.min(0.3 + this.flags.catchAttempts * 0.15, 0.9);
-      if (Math.random() < chance) {
-        this.dialogue.say([
-          "You reach up as a man drifts by. His hat lifts off — no, it was never truly his. It was always waiting for you.",
-          "It fits perfectly. Disturbingly perfectly. As if your head was always just a hat-shaped absence waiting to be filled."
-        ], () => {
-          this.inventory.add(this.itemDefs.hat);
-          this.flags.hatTaken = true;
-          this._updateHotspots();
-          this.audio.playSfx('pickup');
-          this._save();
-        });
-      } else {
-        const misses = [
-          "You reach up. A man drifts past, just out of reach. He tips an invisible hat at you. Was that sarcasm?",
-          "Almost! A bowler hat grazes your fingertips. The man who was wearing it doesn't seem to notice. Or care.",
-          "You lunge. You miss. A man floats by with the serene indifference of a cloud that happens to wear business attire.",
-          "You grab for a hat. The hat eludes you. The man it belongs to smiles gently, as if to say: timing is everything."
-        ];
-        this.dialogue.say(misses[Math.floor(Math.random() * misses.length)]);
+      if (!this.flags.menExamined) {
+        this.dialogue.say("You stand on the street. Men drift past overhead. You should probably look up at them first.");
+        return;
       }
+      // Clean catch: examine the men first, then stand here. Success.
+      this.dialogue.say([
+        "You position yourself beneath the falling men. One drifts by, close. His hat tilts \u2014",
+        "It lifts off his head, spiraling down like a leaf that has somewhere important to be. You catch it.",
+        "It fits perfectly. Disturbingly perfectly. As if your head was always just a hat-shaped absence waiting to be filled."
+      ], () => {
+        this.inventory.add(this.itemDefs.hat);
+        this.flags.hatTaken = true;
+        this._updateHotspots();
+        this.audio.playSfx('pickup');
+        this._save();
+      });
     };
 
     this.actions['golc-building'] = () => {
