@@ -3123,17 +3123,27 @@ class Parallax {
   }
 
   refresh(sceneEl) {
-    this.layers = Array.from(sceneEl.querySelectorAll('.parallax-layer'));
+    // Capture each layer's base CSS transform so we can compose with it.
+    // Elements like hc-easel use translateX(-50%) for centering — if we
+    // overwrite that with a parallax translate, they jump to the right.
+    this.layers = Array.from(sceneEl.querySelectorAll('.parallax-layer')).map(el => {
+      // Clear any previous parallax inline transform to read the true CSS value
+      el.style.transform = '';
+      const base = getComputedStyle(el).transform;
+      return { el, base: (base && base !== 'none') ? base : '' };
+    });
   }
 
   update() {
     const dx = (this.cx - 0.5) * 2;
     const dy = (this.cy - 0.5) * 2;
-    this.layers.forEach(layer => {
-      const depth = parseFloat(layer.dataset.depth || 0);
+    this.layers.forEach(({ el, base }) => {
+      const depth = parseFloat(el.dataset.depth || 0);
       const x = -dx * depth * 100;
       const y = -dy * depth * 50;
-      layer.style.transform = `translate(${x}px, ${y}px)`;
+      // Compose: parallax offset first, then the element's base transform
+      const parallax = `translate(${x}px, ${y}px)`;
+      el.style.transform = base ? `${parallax} ${base}` : parallax;
     });
   }
 }
