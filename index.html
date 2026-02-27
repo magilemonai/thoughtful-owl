@@ -798,6 +798,164 @@ html, body {
 .hc-curtain-r { right: 26%; border-radius: 0 0 0 30%; }
 
 /* ============================================================
+   SCENE: The Discovery of Fire (Room 4b)
+   A dark stage. A brass tuba engulfed in flames.
+   ============================================================ */
+#scene-fire {
+  background: linear-gradient(180deg, #0a0808 0%, #1a1210 60%, #2a1a12 100%);
+}
+.fire-stage {
+  position: absolute; bottom: 0; left: 0; right: 0; height: 20%;
+  background: linear-gradient(180deg, #3a2820, #2a1a10);
+  border-top: 2px solid #4a3828;
+}
+.fire-stage-boards {
+  position: absolute; inset: 0;
+  background: repeating-linear-gradient(90deg,
+    transparent, transparent 12%, rgba(0,0,0,0.1) 12%, rgba(0,0,0,0.1) 12.5%);
+}
+/* Tuba */
+.fire-tuba {
+  position: absolute; bottom: 20%; left: 50%; transform: translateX(-50%);
+  z-index: 5;
+}
+.tuba-bell {
+  width: 90px; height: 80px;
+  background: radial-gradient(ellipse at 40% 40%, #d8c070, #b8a050, #987830);
+  border-radius: 50% 50% 45% 45%;
+  border: 3px solid #a89040;
+  box-shadow: inset 0 -10px 20px rgba(0,0,0,0.3),
+              0 0 30px rgba(200,160,60,0.2);
+  position: relative;
+}
+.tuba-bell-inner {
+  position: absolute; top: 15%; left: 50%; transform: translateX(-50%);
+  width: 50px; height: 45px;
+  background: radial-gradient(ellipse, #1a1008 60%, #3a2a18);
+  border-radius: 50%;
+}
+.tuba-body {
+  width: 30px; height: 70px;
+  background: linear-gradient(90deg, #c8a850, #a88830, #c8a850);
+  margin: -5px auto 0;
+  border-radius: 5px;
+  border: 2px solid #a89040;
+}
+.tuba-valves {
+  display: flex; justify-content: center; gap: 3px;
+  margin-top: -2px;
+}
+.tuba-valve {
+  width: 8px; height: 14px;
+  background: linear-gradient(180deg, #d8c070, #b8a050);
+  border-radius: 2px;
+  border: 1px solid #a89040;
+}
+.tuba-base {
+  width: 50px; height: 8px;
+  background: #b8a050;
+  border-radius: 50%;
+  margin: 0 auto;
+  border: 1px solid #a89040;
+}
+/* Flames on the tuba */
+.fire-flames {
+  position: absolute; bottom: calc(20% + 60px); left: 50%;
+  transform: translateX(-50%);
+  z-index: 6;
+  pointer-events: none;
+  transition: opacity 1.5s ease, transform 1.5s ease;
+}
+.fire-flames.calmed {
+  opacity: 0.15;
+  transform: translateX(-50%) scale(0.3);
+}
+.flame {
+  position: absolute;
+  background: radial-gradient(ellipse at 50% 80%, #ff6a00, #ff4500 40%, #ff0000 70%, transparent);
+  border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+  animation: flicker-flame 0.8s ease-in-out infinite alternate;
+  filter: blur(1px);
+}
+.flame-1 {
+  width: 40px; height: 70px; left: -20px; bottom: 0;
+  animation-duration: 0.7s;
+}
+.flame-2 {
+  width: 55px; height: 90px; left: -28px; bottom: -5px;
+  background: radial-gradient(ellipse at 50% 80%, #ffaa00, #ff6600 40%, #ff2200 70%, transparent);
+  animation-duration: 0.9s; animation-delay: -0.2s;
+}
+.flame-3 {
+  width: 35px; height: 60px; left: -8px; bottom: 5px;
+  animation-duration: 0.6s; animation-delay: -0.4s;
+}
+.flame-4 {
+  width: 45px; height: 75px; left: -30px; bottom: -8px;
+  background: radial-gradient(ellipse at 50% 80%, #ffcc00, #ff8800 40%, #ff4400 70%, transparent);
+  animation-duration: 1s; animation-delay: -0.6s;
+}
+.flame-5 {
+  width: 30px; height: 50px; left: 5px; bottom: 10px;
+  animation-duration: 0.65s; animation-delay: -0.1s;
+}
+@keyframes flicker-flame {
+  0% { transform: scaleX(1) scaleY(1) rotate(-2deg); opacity: 0.9; }
+  50% { transform: scaleX(1.05) scaleY(1.1) rotate(1deg); opacity: 1; }
+  100% { transform: scaleX(0.95) scaleY(0.95) rotate(2deg); opacity: 0.85; }
+}
+/* Fire glow on the room */
+.fire-glow {
+  position: absolute; bottom: 10%; left: 50%; transform: translateX(-50%);
+  width: 80%; height: 60%;
+  background: radial-gradient(ellipse at 50% 80%,
+    rgba(255,120,20,0.15), rgba(255,80,0,0.05) 50%, transparent 70%);
+  pointer-events: none;
+  z-index: 1;
+  transition: opacity 1.5s;
+}
+.fire-glow.calmed {
+  background: radial-gradient(ellipse at 50% 80%,
+    rgba(255,180,80,0.08), transparent 60%);
+}
+/* Warm ember glow after calming */
+.fire-ember {
+  position: absolute; bottom: calc(20% + 40px); left: 50%;
+  transform: translateX(-50%);
+  width: 60px; height: 30px;
+  background: radial-gradient(ellipse, rgba(255,150,50,0.4), transparent 70%);
+  z-index: 6;
+  opacity: 0;
+  transition: opacity 2s;
+}
+.fire-ember.visible { opacity: 1; }
+/* Door forward (behind tuba) */
+.fire-door-forward {
+  position: absolute; right: 8%; bottom: 20%; width: 8%; height: 28%;
+  background: linear-gradient(90deg, #3a2a18, #2a1a10);
+  border: 3px solid #4a3828;
+  border-radius: 3px 3px 0 0;
+  z-index: 2;
+}
+.fire-door-forward.accessible {
+  box-shadow: 0 0 20px rgba(255,150,50,0.15);
+}
+.fire-doorknob-f {
+  position: absolute; left: 8px; top: 55%;
+  width: 8px; height: 8px;
+  background: #c8a860;
+  border-radius: 50%;
+}
+/* Door back */
+.fire-door-back {
+  position: absolute; left: 5%; bottom: 20%; width: 6%; height: 24%;
+  background: linear-gradient(270deg, #3a2a18, #2a1a10);
+  border: 2px solid #4a3828;
+  border-radius: 3px 3px 0 0;
+  z-index: 2;
+}
+
+/* ============================================================
    SCENE: Time Transfixed (Room 5)
    Victorian room with a train emerging from the fireplace.
    ============================================================ */
@@ -1544,6 +1702,73 @@ html, body {
       </div>
     </div>
 
+    <!-- ROOM 4b: The Discovery of Fire -->
+    <div class="scene" id="scene-fire" data-scene="fire">
+      <!-- Stage floor -->
+      <div class="fire-stage">
+        <div class="fire-stage-boards"></div>
+      </div>
+
+      <!-- Fire glow on walls -->
+      <div class="fire-glow" id="fire-glow"></div>
+
+      <!-- Tuba -->
+      <div class="fire-tuba parallax-layer" data-depth="0.03">
+        <div class="tuba-bell">
+          <div class="tuba-bell-inner"></div>
+        </div>
+        <div class="tuba-body"></div>
+        <div class="tuba-valves">
+          <div class="tuba-valve"></div>
+          <div class="tuba-valve"></div>
+          <div class="tuba-valve"></div>
+        </div>
+        <div class="tuba-base"></div>
+      </div>
+
+      <!-- Flames -->
+      <div class="fire-flames" id="fire-flames">
+        <div class="flame flame-1"></div>
+        <div class="flame flame-2"></div>
+        <div class="flame flame-3"></div>
+        <div class="flame flame-4"></div>
+        <div class="flame flame-5"></div>
+      </div>
+
+      <!-- Warm ember (after calming) -->
+      <div class="fire-ember" id="fire-ember"></div>
+
+      <!-- Door forward -->
+      <div class="fire-door-forward" id="fire-door-fwd">
+        <div class="fire-doorknob-f"></div>
+      </div>
+
+      <!-- Door back -->
+      <div class="fire-door-back"></div>
+
+      <!-- Hotspots -->
+      <div class="hotspot" data-action="fire-tuba"
+           style="left:38%; bottom:20%; width:24%; height:45%;">
+        <div class="hotspot-label">A burning tuba</div>
+      </div>
+      <div class="hotspot" data-action="fire-flames"
+           style="left:40%; bottom:40%; width:20%; height:30%;">
+        <div class="hotspot-label">The flames</div>
+      </div>
+      <div class="hotspot" data-action="fire-stage"
+           style="left:20%; bottom:0%; width:60%; height:20%;">
+        <div class="hotspot-label">The stage</div>
+      </div>
+      <div class="hotspot" data-action="door-time" id="hs-door-time"
+           style="right:6%; bottom:20%; width:10%; height:28%;">
+        <div class="hotspot-label">A door</div>
+      </div>
+      <div class="hotspot" data-action="back-human"
+           style="left:3%; bottom:20%; width:8%; height:24%;">
+        <div class="hotspot-label">Go back</div>
+      </div>
+    </div>
+
     <!-- ROOM 5: Time Transfixed -->
     <div class="scene" id="scene-time" data-scene="time">
       <div class="tt-wall"></div>
@@ -1603,7 +1828,7 @@ html, body {
            style="right:0%; bottom:25%; width:10%; height:30%;">
         <div class="hotspot-label">Door</div>
       </div>
-      <div class="hotspot" data-action="back-human"
+      <div class="hotspot" data-action="back-fire"
            style="left:0%; bottom:0%; width:8%; height:25%;">
         <div class="hotspot-label">Go back</div>
       </div>
@@ -1921,6 +2146,15 @@ class AudioEngine {
         // Soft room
         this.createNoise('lowpass', 150, 0.5, 0.01);
       }
+      else if (scene === 'fire') {
+        // Roaring fire crackle
+        this.createNoise('bandpass', 600, 3, 0.04);
+        this.createNoise('bandpass', 1500, 5, 0.02);
+        this.createNoise('bandpass', 200, 1, 0.02);
+        // Deep tuba drone
+        this.createTone(58, 'sawtooth', 0.008);
+        this.createTone(87, 'sine', 0.006);
+      }
       else if (scene === 'time') {
         // Ticking clock
         this._scheduleTicks();
@@ -2117,6 +2351,27 @@ class ParticleSystem {
     }
   }
 
+  // Fire embers rising
+  spawnEmbers(count) {
+    const cx = this.canvas.width * 0.5;
+    const cy = this.canvas.height * 0.45;
+    for (let i = 0; i < count; i++) {
+      this.particles.push({
+        x: cx + (Math.random() - 0.5) * 100,
+        y: cy + Math.random() * 80,
+        vx: (Math.random() - 0.5) * 0.5,
+        vy: -Math.random() * 1.2 - 0.3,
+        size: Math.random() * 3 + 1,
+        alpha: Math.random() * 0.6 + 0.2,
+        life: 1,
+        decay: 0.003 + Math.random() * 0.004,
+        type: 'ember',
+        originX: cx,
+        originY: cy
+      });
+    }
+  }
+
   // Smoke from train chimney
   spawnSmoke() {
     const cx = this.canvas.width * 0.53;
@@ -2189,7 +2444,6 @@ class ParticleSystem {
         p.size += 0.05;
         p.alpha -= p.decay;
         if (p.alpha <= 0) {
-          // Respawn at origin
           p.x = p.originX + (Math.random() - 0.5) * 10;
           p.y = p.originY;
           p.size = Math.random() * 6 + 3;
@@ -2200,6 +2454,30 @@ class ParticleSystem {
         this.ctx.fillStyle = `rgba(120, 110, 100, ${p.alpha})`;
         this.ctx.beginPath();
         this.ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        this.ctx.fill();
+      }
+      else if (p.type === 'ember') {
+        p.x += p.vx + (Math.random() - 0.5) * 0.5;
+        p.y += p.vy;
+        p.alpha -= p.decay;
+        if (p.alpha <= 0) {
+          p.x = p.originX + (Math.random() - 0.5) * 100;
+          p.y = p.originY + Math.random() * 80;
+          p.size = Math.random() * 3 + 1;
+          p.alpha = Math.random() * 0.6 + 0.2;
+          p.vx = (Math.random() - 0.5) * 0.5;
+          p.vy = -Math.random() * 1.2 - 0.3;
+        }
+        // Orange-red ember
+        const r = 255, g = Math.floor(100 + Math.random() * 80), b = 0;
+        this.ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${p.alpha})`;
+        this.ctx.beginPath();
+        this.ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        this.ctx.fill();
+        // Glow
+        this.ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${p.alpha * 0.3})`;
+        this.ctx.beginPath();
+        this.ctx.arc(p.x, p.y, p.size * 2.5, 0, Math.PI * 2);
         this.ctx.fill();
       }
     }
@@ -2587,6 +2865,8 @@ class Game {
         this.particles.spawnFireflies(15);
       } else if (sceneId === 'personal') {
         this.particles.spawnDust(20);
+      } else if (sceneId === 'fire') {
+        this.particles.spawnEmbers(12);
       } else if (sceneId === 'time') {
         this.particles.spawnDust(12);
         // Smoke from train scheduled separately
@@ -2660,6 +2940,18 @@ class Game {
       if (passage) passage.classList.add('revealed');
       if (doorLovers) doorLovers.style.display = 'block';
     }
+
+    // Discovery of Fire: flames calmed, door accessible
+    const flames = document.getElementById('fire-flames');
+    const fireGlow = document.getElementById('fire-glow');
+    const fireEmber = document.getElementById('fire-ember');
+    const fireDoorFwd = document.getElementById('fire-door-fwd');
+    if (this.flags.fireCalmed) {
+      if (flames) flames.classList.add('calmed');
+      if (fireGlow) fireGlow.classList.add('calmed');
+      if (fireEmber) fireEmber.classList.add('visible');
+      if (fireDoorFwd) fireDoorFwd.classList.add('accessible');
+    }
   }
 
   // ---- ACTION HANDLING ----
@@ -2689,7 +2981,106 @@ class Game {
   }
 
   _getWrongItemLine(itemId, action) {
-    const lines = [
+    // == PIPE EASTER EGGS (unique response for pipe on most things) ==
+    const pipeLines = {
+      'streetlamp': "You blow through the not-a-pipe at the streetlamp. The lamp flickers, annoyed. It was doing fine without your editorial commentary.",
+      'sky': "You hold the pipe up to the impossible sky. The sky does not acknowledge the pipe. The pipe does not acknowledge the sky. You stand between two acts of denial.",
+      'puddle': "You dip the not-a-pipe in the puddle. Its reflection reads: <i>Ceci n'est pas un reflet.</i> Of course it isn't.",
+      'pv-glass': "You tap the giant wine glass with the pipe. It rings \u2014 a clear, perfect note. For a moment, everything makes sense. Then it stops, and nothing does.",
+      'pv-match': "You hold the not-a-pipe next to the giant matchstick. For one terrible second, you imagine what would happen if they collaborated. You pull it away quickly.",
+      'pv-bed': "You place the pipe on the pillow. It looks oddly at home. A pipe dreaming of not being a pipe. Or a bed dreaming of being useful.",
+      'golc-men': "You wave the pipe at the falling men. They tip their hats. One mouths the word <i>'colleague.'</i>",
+      'golc-building': "You brandish the pipe at the building facade. The building is unmoved. Buildings rarely are.",
+      'golc-catch': "You try to use the pipe as a lure. The falling men are intrigued but not convinced.",
+      'hc-canvas': "You hold the pipe up to the canvas. For a moment, a tiny painted pipe appears in the landscape. Then it vanishes. It was never there. Like everything else.",
+      'tt-fireplace': "You point the pipe at the fireplace. The fireplace, already occupied by a train, has no room for your philosophical accessories.",
+      'tt-clock': "You tap the clock with the pipe. The hands don't move, but you could swear the ticking changed key.",
+      'tt-mirror': "You hold the pipe up to the mirror. The reflection shows a pipe. But is the reflected pipe also not a pipe? Is it the negation of a negation? You put the pipe away before you get a headache.",
+      'mr-mirror': "You show the mirror the not-a-pipe. The mirror shows the back of a pipe. This helps no one.",
+      'mr-book': "You place the pipe on the book. The book has no chapter on pipes, not-a-pipes, or the ontological status of either.",
+      'mr-shelf': "The pipe rests on the shelf. It looks like it belongs in a still life. Which is exactly where you are, come to think of it.",
+      'lv-left': "This moment doesn't need a pipe. It needs courage.",
+      'lv-right': "You can't smoke your way through this. This is the one thing that requires you to just... be present.",
+      'fire-stage': "You tap the pipe on the stage. The boards resonate. A brief, hollow sound, like applause in an empty theatre.",
+      'door-personal': "The door doesn't need un-naming. It's already doing its job.",
+      'door-golconda': "You wave the pipe at the door. The door opens. But it was going to do that anyway.",
+      'door-human': "The pipe adds nothing to this door, but it makes you feel more distinguished while walking through it.",
+      'door-mirror': "The pipe can un-name many things, but it cannot pick a lock.",
+      'door-time': "A pipe against a door. This is literally just knocking with extra philosophy.",
+    };
+
+    // == APPLE SPECIFIC ==
+    const appleLines = {
+      'streetlamp': "You offer the apple to the streetlamp. The lamp declines. It's watching its figure.",
+      'pv-comb': "The apple bounces off the comb. Even shrunk, the comb has no interest in fruit.",
+      'pv-glass': "You drop the apple in the giant wine glass. It disappears into the void. Then reappears in your hand. The glass was just showing off.",
+      'pv-match': "Holding a green apple near a giant matchstick feels like the setup to a joke you'd rather not hear the punchline of.",
+      'golc-men': "You hurl the apple at a falling man. He catches it mid-descent and places it over his face without breaking stride. You have contributed to someone's identity crisis.",
+      'mr-mirror': "You hold the apple up to the mirror. The mirror shows the back of an apple. Somehow, this is less unsettling than the back of your head.",
+      'fire-tuba': "You consider feeding the apple to the burning tuba. The tuba is not hungry. It is on fire. These are different problems.",
+      'fire-flames': "You hold the apple near the flames. It doesn't roast. This fire isn't interested in cooking. It has artistic ambitions.",
+    };
+
+    // == HAT SPECIFIC ==
+    const hatLines = {
+      'streetlamp': "You put the hat on the streetlamp. It looks distinguished. You take it back. The lamp looked better without an identity crisis.",
+      'pv-comb': "The bowler hat and the giant comb regard each other. The hat is small. The comb is large. Neither is comfortable.",
+      'golc-men': "You wave the hat at the falling men. They wave back. With their hats. It's a very polite apocalypse.",
+      'tt-train': "You place the hat on the train. The locomotive looks suddenly dapper and deeply confused.",
+      'tt-clock': "You put the hat on the clock. Time does not wear hats. This is now a known fact.",
+      'mr-mirror': "You hold the bowler hat up to the mirror. The mirror shows a bowler hat from behind. You are not surprised. You are never surprised anymore.",
+      'fire-tuba': "You try to smother the flames with the hat. The hat gets warm. The flames are amused. You retrieve the hat, slightly singed in its dignity.",
+    };
+
+    // == LETTER SPECIFIC ==
+    const letterLines = {
+      'streetlamp': "You hold the letter up to the lamplight. Your handwriting glows. The name on the envelope shifts and blurs. Not yet.",
+      'tt-train': "You try to mail the letter via train. The train has not moved since 1938. The postal service here is abysmal.",
+      'tt-clock': "You wave the letter at the clock. Time cannot read. Time is illiterate. This explains a lot about deadlines.",
+      'fire-tuba': "You consider burning the letter in the tuba's flames. Something inside you revolts. This letter is important. You don't know why yet.",
+      'fire-flames': "The flames reach toward the letter, then recoil. Even fire knows some things shouldn't burn.",
+    };
+
+    // Check for specific item+action combo
+    const specific = { pipe: pipeLines, apple: appleLines, hat: hatLines, letter: letterLines };
+    if (specific[itemId] && specific[itemId][action]) {
+      return specific[itemId][action];
+    }
+
+    // Generic fallbacks per item
+    const genericByItem = {
+      pipe: [
+        "You point the not-a-pipe at it. <i>\"Ceci n'est pas un...\"</i> no, you can't un-name <i>everything.</i>",
+        "The pipe has opinions about many things. This is not one of them.",
+        "The not-a-pipe is powerful, but even it has limits. Philosophical limits.",
+      ],
+      apple: [
+        "The apple wants to be on someone's face, not here.",
+        "You hold out the apple. It is declined. The apple expected this.",
+        "Green apples are for covering faces and feeding trains. Not this.",
+      ],
+      hat: [
+        "The bowler hat has a very specific purpose, and this isn't it.",
+        "You doff the hat politely. Nothing changes. But at least you had manners.",
+        "The hat fits your head, not this situation.",
+      ],
+      letter: [
+        "The letter is for one person, and it's not this.",
+        "You hold the warm envelope near it. Nothing resonates. The letter knows where it needs to go.",
+        "The love letter declines. It has a very specific appointment with a mirror.",
+      ],
+      painting: [
+        "The small canvas adds nothing here but a sense of recursion.",
+        "A painting of a painting near a thing. This is either profound or absurd. (Both. It's both.)",
+      ],
+    };
+    if (genericByItem[itemId]) {
+      const arr = genericByItem[itemId];
+      return arr[Math.floor(Math.random() * arr.length)];
+    }
+
+    // Ultimate fallback
+    const fallback = [
       "That's creative, but no.",
       "You try. The universe politely declines.",
       "That combination exists only in a more surreal version of this already very surreal place.",
@@ -2697,8 +3088,9 @@ class Game {
       "The objects refuse. They have their dignity.",
       "You hold them together hopefully. Nothing happens, but you've learned something about yourself.",
       "That's not how this works. That's not how any of this works.",
+      "You push them together like mismatched puzzle pieces. The universe looks away, embarrassed.",
     ];
-    return lines[Math.floor(Math.random() * lines.length)];
+    return fallback[Math.floor(Math.random() * fallback.length)];
   }
 
   // ---- REGISTER ALL ACTIONS ----
@@ -2965,13 +3357,98 @@ class Game {
 
     this.actions['hc-hidden-door'] = () => {
       this.dialogue.say(
-        "A door in the landscape that the painting chose not to show you. What else has art been hiding?",
-        () => this.goToScene('time')
+        "A door in the landscape that the painting chose not to show you. What else has art been hiding? You step through and smell smoke.",
+        () => this.goToScene('fire')
       );
     };
 
     this.actions['back-human'] = () => {
       this.goToScene('human');
+    };
+
+    // ==============================
+    // THE DISCOVERY OF FIRE (Room 4b)
+    // ==============================
+
+    this.actions['fire-tuba'] = () => {
+      if (this.flags.fireCalmed) {
+        this.dialogue.say("The tuba sits in a gentle amber glow, warm but no longer burning. It hums softly, as if remembering a song it once played in a dream.");
+        return;
+      }
+      this.dialogue.say(
+        this.flags.tubaExamined
+          ? ["The tuba burns on. It's not being consumed. The fire is not destructive \u2014 it's expressive. The tuba is <i>performing</i>."]
+          : [
+            "A brass tuba, magnificent and absurd, engulfed in flames that dance but never consume. The metal gleams, impossibly polished by its own burning.",
+            "It hums a low, resonant note \u2014 B-flat, the fundamental frequency of the universe, or so tubas would have you believe.",
+            "The fire is beautiful but impassable. It fills the center of the stage like a prima donna who refuses to share the spotlight."
+          ]
+      );
+      this.flags.tubaExamined = true;
+    };
+
+    this.actions['fire-flames'] = () => {
+      if (this.flags.fireCalmed) {
+        this.dialogue.say("Where the blaze once was, a gentle warmth remains. Not-a-fire. Just the memory of heat, glowing softly.");
+        return;
+      }
+      this.dialogue.say([
+        "The flames lick upward with the casual confidence of something that has been burning since 1935 and sees no reason to stop.",
+        "They're warm on your face. Not dangerously so \u2014 more like the warmth of a thought you can't quite finish."
+      ]);
+    };
+
+    this.actions['fire-stage'] = () => {
+      this.dialogue.say(
+        this.flags.stageExamined
+          ? "The stage boards creak underfoot. They've held this performance for decades. They're tired but committed."
+          : [
+            "A polished wooden stage. No audience, no curtain, no program. Just you and a burning tuba.",
+            "You wonder if you're the performer or the audience. In a Magritte painting, the distinction is purely decorative."
+          ]
+      );
+      this.flags.stageExamined = true;
+    };
+
+    // USE: pipe on tuba -> calm the flames
+    this.actions['pipe+fire-tuba'] = () => {
+      if (this.flags.fireCalmed) {
+        this.dialogue.say("The fire has already been un-fired. The not-a-pipe nods in quiet solidarity with the not-a-fire.");
+        this.inventory.clearSelection();
+        return;
+      }
+      this.dialogue.say([
+        "You hold the not-a-pipe up to the burning tuba. A pipe that isn't a pipe, meeting a fire that \u2014 what if it isn't a fire?",
+        "You blow gently through the not-a-pipe. A note emerges: thin, reedy, absurd against the tuba's rumbling B-flat.",
+        "<i>\"Ceci n'est pas un feu,\"</i> you whisper.",
+        "The flames hesitate. They flicker. They consider the philosophical implications.",
+        "Slowly, gently, the fire decides it doesn't have to be a fire anymore. It softens into a warm amber glow. The path forward clears."
+      ], () => {
+        this.flags.fireCalmed = true;
+        this.inventory.clearSelection();
+        this._updateHotspots();
+        this.audio.playSfx('pickup');
+        this._save();
+      });
+    };
+
+    this.actions['pipe+fire-flames'] = () => {
+      this.actions['pipe+fire-tuba']();
+    };
+
+    this.actions['door-time'] = () => {
+      if (!this.flags.fireCalmed) {
+        this.dialogue.say("A door stands beyond the burning tuba. The fire blocks your path, beautiful and indifferent to your need to proceed.");
+        return;
+      }
+      this.dialogue.say(
+        "With the flames calmed to a gentle glow, you step past the tuba. The door beyond is warm to the touch. Behind it: the sound of ticking.",
+        () => this.goToScene('time')
+      );
+    };
+
+    this.actions['back-fire'] = () => {
+      this.goToScene('fire');
     };
 
     // ==============================
