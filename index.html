@@ -116,6 +116,38 @@ html, body {
   50% { transform: translateY(-10px); }
 }
 
+/* Title screen menu buttons */
+.title-menu {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin-top: 30px;
+}
+.title-menu.visible { display: flex; }
+.title-menu-btn {
+  padding: 8px 32px;
+  background: transparent;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 0.85rem;
+  font-style: italic;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: background 0.3s, color 0.3s, transform 0.2s;
+  min-width: 160px;
+}
+.title-menu-btn:hover {
+  background: var(--accent);
+  color: var(--night);
+  transform: scale(1.05);
+}
+.title-menu-btn.primary {
+  background: rgba(201,169,110,0.15);
+  border-width: 2px;
+}
+
 /* ============================================================
    SCENE CONTAINER
    ============================================================ */
@@ -150,6 +182,11 @@ html, body {
   transition: filter 0.2s;
 }
 .hotspot:hover { filter: brightness(1.2) drop-shadow(0 0 8px rgba(201,169,110,0.4)); }
+.hotspot:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  filter: brightness(1.2) drop-shadow(0 0 8px rgba(201,169,110,0.5));
+}
 /* Cursor changes when item is selected */
 .item-selected .hotspot { cursor: crosshair; }
 .item-selected .hotspot:hover {
@@ -272,8 +309,25 @@ html, body {
   transition: all 0.2s;
   position: relative;
 }
+.inv-slot.occupied.new-item {
+  animation: inv-slide-in 0.4s ease-out;
+}
+@keyframes inv-slide-in {
+  0% { transform: translateY(20px); opacity: 0; }
+  60% { transform: translateY(-4px); opacity: 1; }
+  100% { transform: translateY(0); opacity: 1; }
+}
 .inv-slot:hover { border-color: var(--accent); background: rgba(26,26,46,0.9); }
-.inv-slot.selected { border-color: var(--accent); box-shadow: 0 0 12px rgba(201,169,110,0.4); background: rgba(42,42,58,0.9); }
+.inv-slot.selected {
+  border-color: var(--accent);
+  box-shadow: 0 0 12px rgba(201,169,110,0.4);
+  background: rgba(42,42,58,0.9);
+  animation: inv-glow-pulse 1.5s ease-in-out infinite alternate;
+}
+@keyframes inv-glow-pulse {
+  0% { box-shadow: 0 0 8px rgba(201,169,110,0.3); }
+  100% { box-shadow: 0 0 18px rgba(201,169,110,0.6); }
+}
 .inv-slot .item-icon {
   font-size: 1.6rem;
   filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5));
@@ -470,22 +524,45 @@ html, body {
 }
 .pv-floor {
   position: absolute; bottom: 0; left: 0; right: 0; height: 30%;
-  background: linear-gradient(180deg, #8a7a6a, #7a6a5a);
+  background:
+    repeating-linear-gradient(
+      90deg, transparent, transparent 12%, rgba(0,0,0,0.05) 12%, rgba(0,0,0,0.05) 12.5%
+    ),
+    linear-gradient(180deg, #8a7a6a, #7a6a5a);
   border-top: 2px solid #6a5a4a;
+}
+/* Floor perspective shading */
+.pv-floor::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(180deg, rgba(0,0,0,0.08) 0%, transparent 40%);
+  pointer-events: none;
 }
 .pv-wall-left {
   position: absolute; left: 0; top: 0; bottom: 30%; width: 5%;
-  background: linear-gradient(90deg, #a09080, #b8a898);
+  background: linear-gradient(90deg, #988878, #a89888, #b8a898);
   border-right: 2px solid #8a7a6a;
+  box-shadow: inset -4px 0 10px rgba(0,0,0,0.05);
 }
 .pv-wall-right {
   position: absolute; right: 0; top: 0; bottom: 30%; width: 5%;
-  background: linear-gradient(270deg, #a09080, #b8a898);
+  background: linear-gradient(270deg, #988878, #a89888, #b8a898);
   border-left: 2px solid #8a7a6a;
+  box-shadow: inset 4px 0 10px rgba(0,0,0,0.05);
 }
 .pv-baseboard {
-  position: absolute; bottom: 30%; left: 0; right: 0; height: 12px;
-  background: #6a5540;
+  position: absolute; bottom: 30%; left: 0; right: 0; height: 14px;
+  background: linear-gradient(180deg, #7a6550, #6a5540, #5a4530);
+  box-shadow: 0 -1px 3px rgba(0,0,0,0.1);
+}
+/* Crown molding at ceiling */
+.pv-baseboard::before {
+  content: '';
+  position: absolute;
+  top: calc(-1 * (70vh - 14px)); left: 0; right: 0;
+  height: 8px;
+  background: linear-gradient(180deg, #7a6a5a, #8a7a6a);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 /* Giant comb */
 .giant-comb {
@@ -512,10 +589,20 @@ html, body {
 }
 .glass-bowl {
   width: 100px; height: 120px;
-  background: radial-gradient(ellipse at 30% 30%, rgba(200,220,240,0.4), rgba(160,190,220,0.15));
+  background: radial-gradient(ellipse at 30% 30%, rgba(200,220,240,0.45), rgba(160,190,220,0.2), rgba(140,170,200,0.1));
   border: 2px solid rgba(180,200,220,0.5);
   border-radius: 50% 50% 45% 45%;
-  box-shadow: inset 0 -20px 40px rgba(180,200,220,0.1);
+  box-shadow: inset 0 -20px 40px rgba(180,200,220,0.1),
+              inset 15px -5px 20px rgba(255,255,255,0.08);
+}
+/* Glass highlight reflection */
+.glass-bowl::before {
+  content: '';
+  position: absolute;
+  top: 15%; left: 20%;
+  width: 20%; height: 35%;
+  background: linear-gradient(160deg, rgba(255,255,255,0.2), transparent);
+  border-radius: 50%;
 }
 .glass-stem {
   width: 8px; height: 80px;
@@ -555,23 +642,33 @@ html, body {
 }
 .bed-frame {
   width: 100%; height: 100%;
-  background: linear-gradient(180deg, #f0e0d0, #e0d0c0);
+  background: linear-gradient(180deg, #f0e0d0, #e8d8c8, #e0d0c0);
   border: 3px solid #8a6a4a;
   border-radius: 4px;
+  box-shadow: inset 0 0 10px rgba(0,0,0,0.05);
 }
 .bed-pillow {
   position: absolute; right: 8%; top: 15%;
   width: 28%; height: 50%;
-  background: #f5f0e8;
+  background: linear-gradient(135deg, #f8f4ec, #f5f0e8, #efe8de);
   border-radius: 30%;
   border: 1px solid #d8d0c0;
+  box-shadow: 1px 2px 4px rgba(0,0,0,0.08);
 }
 .bed-blanket {
   position: absolute; left: 0; bottom: 0;
   width: 85%; height: 70%;
-  background: linear-gradient(135deg, #7a90a8, #6a80a0);
+  background: linear-gradient(135deg, #7a90a8, #6a80a0, #7888a0);
   border-radius: 0 30% 0 0;
   border-top: 2px solid #8a9ab0;
+}
+/* Blanket fold detail */
+.bed-blanket::after {
+  content: '';
+  position: absolute;
+  top: 10%; left: 0; right: 20%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
 }
 /* Hidden apple (behind comb) */
 .hidden-apple {
@@ -623,14 +720,25 @@ html, body {
 .golc-building {
   position: absolute; bottom: 0; left: 10%; right: 10%;
   height: 65%;
-  background: #c8b8a0;
+  background:
+    repeating-linear-gradient(
+      0deg, rgba(0,0,0,0.03) 0px, rgba(0,0,0,0.03) 1px,
+      transparent 1px, transparent 12px
+    ),
+    repeating-linear-gradient(
+      90deg, rgba(0,0,0,0.02) 0px, rgba(0,0,0,0.02) 1px,
+      transparent 1px, transparent 24px
+    ),
+    linear-gradient(180deg, #d0c0a8, #c0b090, #b8a888);
   border-top: 4px solid #a89878;
+  box-shadow: inset 0 0 40px rgba(0,0,0,0.08);
 }
 .golc-window {
   position: absolute;
   width: 10%; height: 12%;
-  background: #4a5a6a;
+  background: linear-gradient(135deg, #3a4a5a, #5a6a7a);
   border: 3px solid #a89878;
+  box-shadow: inset 0 0 6px rgba(0,0,0,0.4), 0 2px 4px rgba(0,0,0,0.15);
 }
 .golc-window::after {
   content: ''; position: absolute;
@@ -645,15 +753,29 @@ html, body {
 .golc-roof {
   position: absolute; bottom: 65%; left: 8%; right: 8%;
   height: 3%;
-  background: #8a7a6a;
+  background: linear-gradient(180deg, #7a6a5a, #8a7a6a);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
 }
 .golc-cornice {
   position: absolute; bottom: 67%; left: 9%; right: 9%;
   height: 1.5%;
   background: #9a8a7a;
   border-bottom: 2px solid #7a6a5a;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.15);
 }
-/* Falling men */
+/* Atmospheric haze over sky */
+#scene-golconda::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(180deg,
+    rgba(180,200,220,0.15) 0%,
+    rgba(180,200,220,0.05) 35%,
+    transparent 60%
+  );
+  z-index: 1;
+  pointer-events: none;
+}
+/* Falling men — more detailed */
 .falling-man {
   position: absolute;
   width: 30px;
@@ -671,22 +793,59 @@ html, body {
 .fm-hat::before {
   content: ''; position: absolute;
   bottom: 4px; left: 50%; transform: translateX(-50%);
-  width: 14px; height: 12px;
+  width: 14px; height: 14px;
   background: #1a1a2a;
   border-radius: 40% 40% 0 0;
 }
+/* Face hint */
+.fm-hat::after {
+  content: '';
+  position: absolute;
+  bottom: -4px; left: 50%; transform: translateX(-50%);
+  width: 10px; height: 6px;
+  background: #d8c8b0;
+  border-radius: 0 0 50% 50%;
+}
 .fm-body {
-  width: 16px; height: 30px;
-  background: #2a2a3a;
+  width: 18px; height: 32px;
+  background: linear-gradient(180deg, #2a2a3a, #1a1a2a);
   margin: 0 auto;
   border-radius: 3px 3px 0 0;
+  position: relative;
+}
+/* Coat lapels */
+.fm-body::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 2px; right: 2px; height: 10px;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 8px solid #3a3a4a;
+}
+/* Tie */
+.fm-body::after {
+  content: '';
+  position: absolute;
+  top: 2px; left: 50%; transform: translateX(-50%);
+  width: 3px; height: 14px;
+  background: #5a3030;
 }
 .fm-legs {
-  display: flex; justify-content: center; gap: 2px;
+  display: flex; justify-content: center; gap: 3px;
 }
 .fm-leg {
   width: 5px; height: 20px;
-  background: #2a2a3a;
+  background: linear-gradient(180deg, #2a2a3a, #1a1a2a);
+  border-radius: 0 0 1px 1px;
+}
+/* Shoes */
+.fm-leg::after {
+  content: '';
+  display: block;
+  width: 7px; height: 3px;
+  background: #1a1a1a;
+  border-radius: 0 0 2px 2px;
+  margin-top: -1px;
 }
 @keyframes fall-1 { 0% { top: -80px; } 100% { top: 110%; } }
 @keyframes fall-2 { 0% { top: -120px; } 100% { top: 110%; } }
@@ -707,11 +866,32 @@ html, body {
   0%, 100% { border-color: rgba(201,169,110,0.2); }
   50% { border-color: rgba(201,169,110,0.5); }
 }
-/* Street */
+/* Street — cobblestone texture */
 .golc-street {
   position: absolute; bottom: 0; left: 0; right: 0; height: 12%;
-  background: #7a7a7a;
-  border-top: 2px solid #6a6a6a;
+  background:
+    repeating-linear-gradient(
+      90deg, rgba(0,0,0,0.04) 0px, rgba(0,0,0,0.04) 1px,
+      transparent 1px, transparent 18px
+    ),
+    repeating-linear-gradient(
+      0deg, rgba(0,0,0,0.03) 0px, rgba(0,0,0,0.03) 1px,
+      transparent 1px, transparent 10px
+    ),
+    linear-gradient(180deg, #8a8a8a, #7a7a7a, #6a6a6a);
+  border-top: 3px solid #5a5a5a;
+  box-shadow: inset 0 3px 8px rgba(0,0,0,0.15);
+}
+/* Wet sheen on street */
+.golc-street::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(180deg,
+    rgba(160,190,220,0.06) 0%,
+    rgba(160,190,220,0.03) 50%,
+    transparent 100%
+  );
+  pointer-events: none;
 }
 
 /* ============================================================
@@ -999,15 +1179,38 @@ html, body {
 }
 .tt-wall {
   position: absolute; inset: 0; bottom: 25%;
-  background: linear-gradient(180deg, #b8a898, #c0b0a0);
+  background:
+    repeating-linear-gradient(
+      90deg, rgba(0,0,0,0.008) 0px, transparent 1px, transparent 40px
+    ),
+    linear-gradient(180deg, #baa898, #c0b0a0, #b8a898);
+}
+/* Warm ambient glow from fireplace */
+#scene-time::after {
+  content: '';
+  position: absolute;
+  bottom: 20%; left: 50%; transform: translateX(-50%);
+  width: 50%; height: 40%;
+  background: radial-gradient(ellipse at 50% 90%,
+    rgba(255,180,100,0.06) 0%,
+    rgba(255,150,80,0.03) 40%,
+    transparent 70%
+  );
+  pointer-events: none;
+  z-index: 1;
 }
 .tt-floor {
   position: absolute; bottom: 0; left: 0; right: 0; height: 25%;
-  background: linear-gradient(180deg, #6a5a4a, #5a4a3a);
+  background:
+    repeating-linear-gradient(
+      90deg, transparent, transparent 14%, rgba(0,0,0,0.06) 14%, rgba(0,0,0,0.06) 14.5%
+    ),
+    linear-gradient(180deg, #6a5a4a, #5a4a3a);
 }
 .tt-baseboard {
-  position: absolute; bottom: 25%; left: 0; right: 0; height: 10px;
-  background: #4a3a2a;
+  position: absolute; bottom: 25%; left: 0; right: 0; height: 12px;
+  background: linear-gradient(180deg, #5a4a3a, #4a3a2a);
+  box-shadow: 0 -1px 3px rgba(0,0,0,0.1);
 }
 /* Fireplace */
 .tt-fireplace {
@@ -1016,19 +1219,28 @@ html, body {
   z-index: 3;
 }
 .fp-mantle {
-  position: absolute; top: 0; left: -10%; right: -10%;
-  height: 8%; background: #4a3a2a;
+  position: absolute; top: 0; left: -12%; right: -12%;
+  height: 8%;
+  background: linear-gradient(180deg, #5a4a3a, #4a3a2a, #3a2a1a);
   border-radius: 3px 3px 0 0;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  box-shadow: 0 3px 8px rgba(0,0,0,0.35);
+}
+/* Mantle decorative edge */
+.fp-mantle::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 5%; right: 5%; height: 3px;
+  background: linear-gradient(90deg, transparent, rgba(200,168,96,0.3), transparent);
 }
 .fp-surround {
   position: absolute; top: 8%; left: 0; right: 0; bottom: 0;
-  background: #3a2a1a;
+  background: linear-gradient(180deg, #3a2a1a, #352518);
   border: 6px solid #4a3a2a;
+  box-shadow: inset 0 0 10px rgba(0,0,0,0.2);
 }
 .fp-opening {
   position: absolute; top: 10%; left: 15%; right: 15%; bottom: 0;
-  background: #1a1208;
+  background: radial-gradient(ellipse at 50% 80%, #2a1a0a, #1a1208, #0a0804);
   border-radius: 40% 40% 0 0;
 }
 /* Train emerging from fireplace */
@@ -1038,35 +1250,58 @@ html, body {
 }
 .train-boiler {
   width: 80px; height: 40px;
-  background: linear-gradient(180deg, #2a2a2a, #1a1a1a);
+  background: linear-gradient(180deg, #3a3a3a, #2a2a2a, #1a1a1a);
   border-radius: 10px 40px 0 0;
   border: 2px solid #3a3a3a;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+  position: relative;
+}
+/* Boiler rivet line */
+.train-boiler::after {
+  content: '';
+  position: absolute;
+  top: 50%; left: 10%; right: 30%;
+  height: 2px;
+  background: repeating-linear-gradient(
+    90deg, #4a4a4a 0px, #4a4a4a 3px,
+    transparent 3px, transparent 8px
+  );
 }
 .train-smoke-stack {
   position: absolute; top: -20px; left: 60%;
   width: 12px; height: 20px;
-  background: #2a2a2a;
+  background: linear-gradient(90deg, #2a2a2a, #3a3a3a, #2a2a2a);
   border-radius: 2px 2px 0 0;
 }
 .train-smoke-stack::after {
   content: ''; position: absolute;
-  top: -6px; left: -3px;
-  width: 18px; height: 6px;
-  background: #3a3a3a;
-  border-radius: 2px;
+  top: -6px; left: -4px;
+  width: 20px; height: 7px;
+  background: linear-gradient(180deg, #444, #333);
+  border-radius: 3px 3px 1px 1px;
 }
 .train-front {
-  position: absolute; right: -12px; top: 10px;
-  width: 12px; height: 30px;
-  background: #2a2a2a;
-  border-radius: 0 5px 5px 0;
+  position: absolute; right: -14px; top: 8px;
+  width: 14px; height: 32px;
+  background: linear-gradient(90deg, #2a2a2a, #333);
+  border-radius: 0 6px 6px 0;
+}
+/* Cowcatcher at bottom of front */
+.train-front::after {
+  content: '';
+  position: absolute;
+  bottom: -4px; left: 0; right: -4px;
+  height: 6px;
+  background: #3a3a3a;
+  clip-path: polygon(0 0, 100% 0, 80% 100%, 20% 100%);
 }
 .train-light {
-  position: absolute; right: -16px; top: 18px;
-  width: 8px; height: 8px;
-  background: #ffd;
+  position: absolute; right: -18px; top: 16px;
+  width: 10px; height: 10px;
+  background: radial-gradient(circle, #ffe, #ffd 40%, #cc8 100%);
   border-radius: 50%;
-  box-shadow: 0 0 10px 4px rgba(255,255,200,0.3);
+  box-shadow: 0 0 12px 6px rgba(255,255,200,0.35),
+              0 0 30px 10px rgba(255,255,180,0.1);
 }
 /* Clock on mantle */
 .tt-clock {
@@ -1098,11 +1333,24 @@ html, body {
 .tt-mirror {
   position: absolute; top: 10%; right: 15%;
   width: 15%; height: 30%;
-  background: linear-gradient(135deg, #c8d8e8, #a8b8c8, #d0dce8);
+  background: linear-gradient(135deg, #c8d8e8, #a8b8c8, #c0d0e0, #d0dce8);
   border: 6px solid #6a5a3a;
   border-radius: 50% 50% 3px 3px;
   z-index: 2;
-  box-shadow: inset 0 0 20px rgba(0,0,0,0.1);
+  box-shadow: inset 0 0 20px rgba(0,0,0,0.1),
+              0 4px 12px rgba(0,0,0,0.2);
+}
+/* Mirror glass sheen */
+.tt-mirror::before {
+  content: '';
+  position: absolute; inset: 4px;
+  background: linear-gradient(145deg,
+    rgba(255,255,255,0.12) 0%,
+    transparent 40%,
+    rgba(255,255,255,0.05) 100%
+  );
+  border-radius: 50% 50% 2px 2px;
+  pointer-events: none;
 }
 /* Steam / smoke particles done via JS */
 
@@ -1130,25 +1378,62 @@ html, body {
 }
 .mr-wall {
   position: absolute; inset: 0; bottom: 28%;
-  background: linear-gradient(180deg, #b0a090, #b8a898);
+  background:
+    repeating-linear-gradient(
+      0deg, rgba(160,140,120,0.06) 0px, rgba(160,140,120,0.06) 1px,
+      transparent 1px, transparent 20px
+    ),
+    repeating-linear-gradient(
+      90deg, rgba(160,140,120,0.04) 0px, rgba(160,140,120,0.04) 1px,
+      transparent 1px, transparent 20px
+    ),
+    linear-gradient(180deg, #b0a090, #b8a898);
+}
+/* Wainscoting / lower wall panel */
+.mr-wall::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0; height: 35%;
+  background: linear-gradient(180deg, #a89888, #a09080);
+  border-top: 2px solid #8a7a6a;
 }
 .mr-floor {
   position: absolute; bottom: 0; left: 0; right: 0; height: 28%;
-  background: linear-gradient(180deg, #5a5040, #4a4030);
+  background:
+    repeating-linear-gradient(
+      90deg, transparent, transparent 10%, rgba(0,0,0,0.04) 10%, rgba(0,0,0,0.04) 10.5%
+    ),
+    linear-gradient(180deg, #5a5040, #4a4030);
 }
 .mr-baseboard {
-  position: absolute; bottom: 28%; left: 0; right: 0; height: 8px;
-  background: #3a3020;
+  position: absolute; bottom: 28%; left: 0; right: 0; height: 10px;
+  background: linear-gradient(180deg, #4a3828, #3a3020);
+  box-shadow: 0 -1px 3px rgba(0,0,0,0.1);
 }
 /* Main mirror */
 .mr-mirror {
   position: absolute; top: 8%; left: 50%; transform: translateX(-50%);
   width: 28%; height: 48%;
-  background: linear-gradient(180deg, #c8d0d8, #b0b8c0, #c0c8d0);
+  background: linear-gradient(170deg, #c8d0d8, #b0b8c0, #bcc4cc, #c0c8d0);
   border: 8px solid #6a5a3a;
   z-index: 3;
-  box-shadow: inset 0 0 30px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.2);
+  box-shadow: inset 0 0 30px rgba(0,0,0,0.08),
+              0 4px 12px rgba(0,0,0,0.2),
+              0 0 0 1px rgba(0,0,0,0.1);
   overflow: hidden;
+}
+/* Mirror glass sheen */
+.mr-mirror::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(140deg,
+    rgba(255,255,255,0.15) 0%,
+    transparent 35%,
+    rgba(255,255,255,0.04) 80%,
+    rgba(255,255,255,0.1) 100%
+  );
+  pointer-events: none;
+  z-index: 10;
 }
 /* Figure seen in mirror (back of head) */
 .mr-reflection {
@@ -1223,22 +1508,49 @@ html, body {
 .mr-crack.visible { opacity: 1; }
 .mr-crack-line {
   position: absolute;
-  background: rgba(40,30,20,0.6);
+  background: rgba(20,15,10,0.7);
   transform-origin: center;
+  box-shadow: 0 0 2px rgba(0,0,0,0.3);
 }
-.mr-crack-1 { top: 10%; left: 40%; width: 2px; height: 80%; transform: rotate(5deg); }
-.mr-crack-2 { top: 20%; left: 20%; width: 1px; height: 50%; transform: rotate(-15deg); }
-.mr-crack-3 { top: 30%; left: 60%; width: 1px; height: 40%; transform: rotate(20deg); }
-.mr-crack-4 { top: 40%; left: 35%; width: 1px; height: 30%; transform: rotate(-35deg); }
+.mr-crack-1 { top: 5%; left: 42%; width: 2px; height: 90%; transform: rotate(3deg); }
+.mr-crack-2 { top: 15%; left: 18%; width: 2px; height: 55%; transform: rotate(-12deg); }
+.mr-crack-3 { top: 25%; left: 62%; width: 2px; height: 50%; transform: rotate(18deg); }
+.mr-crack-4 { top: 35%; left: 30%; width: 1px; height: 35%; transform: rotate(-30deg); }
+/* Spiderweb fracture lines from impact point */
+.mr-crack::after {
+  content: '';
+  position: absolute;
+  top: 40%; left: 35%;
+  width: 30%; height: 30%;
+  border: 1px solid rgba(20,15,10,0.3);
+  border-radius: 50%;
+  box-shadow: 0 0 8px rgba(0,0,0,0.1);
+}
 /* Passage behind cracked mirror */
 .mr-passage {
   position: absolute; top: 15%; left: 39%; width: 22%; height: 40%;
-  background: radial-gradient(ellipse, #1a0a1a, #0a0010);
+  background: radial-gradient(ellipse, #2a1a3a, #1a0a2a, #0a0010);
   border-radius: 45% 45% 0 0;
   z-index: 2;
   display: none;
+  box-shadow: 0 0 30px 10px rgba(80,40,120,0.15);
 }
 .mr-passage.revealed { display: block; }
+/* Passage glow — eerie purple light from beyond */
+.mr-passage::before {
+  content: '';
+  position: absolute; inset: 10%;
+  background: radial-gradient(ellipse,
+    rgba(140,80,200,0.2) 0%,
+    rgba(100,50,160,0.1) 40%,
+    transparent 70%
+  );
+  animation: passage-pulse 3s ease-in-out infinite alternate;
+}
+@keyframes passage-pulse {
+  0% { opacity: 0.6; }
+  100% { opacity: 1; }
+}
 
 /* ============================================================
    SCENE: The Lovers (Room 7 — Final)
@@ -1567,6 +1879,97 @@ html, body {
 }
 
 /* ============================================================
+   CAST SHADOWS — ground every object in every scene
+   ============================================================ */
+
+/* Generic shadow mixin: dark ellipse below objects */
+.streetlamp::after, .bench::after,
+.giant-comb::after, .giant-glass::after, .giant-match::after,
+.fire-tuba::after,
+.tt-fireplace::after,
+.hc-easel::after,
+.mr-mirror::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 50%; transform: translateX(-50%);
+  width: 80%;
+  height: 8px;
+  background: radial-gradient(ellipse, rgba(0,0,0,0.35) 0%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* Scene-specific shadow tuning */
+.streetlamp::after { width: 50px; height: 10px; bottom: -6px; }
+.bench::after { width: 90%; height: 6px; bottom: -3px; }
+
+.giant-comb::after { width: 65px; bottom: -3px; }
+.giant-glass::after { width: 80px; bottom: -4px; }
+.giant-match::after { width: 30px; bottom: -5px; transform: translateX(-50%) rotate(-8deg); }
+
+.fire-tuba::after { width: 60px; height: 10px; bottom: -5px; }
+.tt-fireplace::after { width: 90%; height: 12px; bottom: -6px; }
+.hc-easel::after { width: 70%; height: 8px; bottom: -4px; }
+.mr-mirror::after { width: 85%; height: 10px; bottom: -6px; }
+
+/* Falling men shadows on Golconda street */
+.falling-man::after {
+  content: '';
+  position: absolute;
+  bottom: -200px; /* shadows appear on the ground far below */
+  left: 50%; transform: translateX(-50%);
+  width: 20px; height: 6px;
+  background: radial-gradient(ellipse, rgba(0,0,0,0.15) 0%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+/* Personal Values bed shadow */
+.pv-bed::after {
+  content: '';
+  position: absolute;
+  bottom: -3px; left: 0; right: 0; height: 6px;
+  background: radial-gradient(ellipse, rgba(0,0,0,0.25) 0%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+/* Lovers figures shadows */
+.lv-figure::after {
+  content: '';
+  position: absolute;
+  bottom: -6px;
+  left: 50%; transform: translateX(-50%);
+  width: 50px; height: 8px;
+  background: radial-gradient(ellipse, rgba(0,0,0,0.3) 0%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+/* Time Transfixed: clock shelf shadow */
+.tt-clock::after {
+  content: '';
+  position: absolute;
+  bottom: -3px;
+  left: 50%; transform: translateX(-50%);
+  width: 40px; height: 5px;
+  background: radial-gradient(ellipse, rgba(0,0,0,0.25) 0%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+/* Empire: buildings cast shadow on street */
+.street::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; height: 40%;
+  background: linear-gradient(180deg, rgba(0,0,0,0.2) 0%, transparent 100%);
+  pointer-events: none;
+}
+
+/* ============================================================
    IDLE ANIMATIONS — subtle life in every scene
    ============================================================ */
 
@@ -1711,7 +2114,7 @@ html, body {
 </style>
 </head>
 <body>
-<div id="game">
+<div id="game" role="application" aria-label="Ceci N'est Pas Un Jeu - A Magritte Misadventure">
 
   <!-- TITLE SCREEN -->
   <div id="title-screen">
@@ -1721,6 +2124,11 @@ html, body {
       <div class="hat-crown"></div>
       <div class="hat-brim"></div>
       <div class="hat-label">Click to play</div>
+    </div>
+    <!-- Continue/New Game menu (shown when save exists) -->
+    <div class="title-menu" id="title-menu">
+      <button class="title-menu-btn primary" id="btn-continue">Continue</button>
+      <button class="title-menu-btn" id="btn-new-game">New Game</button>
     </div>
     <div style="margin-top:60px; font-size:0.75rem; color:var(--text-dim); font-style:italic;">
       "This is not a game."<br>(But you're playing it anyway.)
@@ -2357,13 +2765,13 @@ html, body {
   <canvas id="fx-canvas"></canvas>
 
   <!-- DIALOGUE BOX -->
-  <div id="dialogue-box">
+  <div id="dialogue-box" role="status" aria-live="polite">
     <div id="dialogue-text"></div>
     <div id="dialogue-hint">Click to continue</div>
   </div>
 
   <!-- INVENTORY BAR -->
-  <div id="inventory-bar">
+  <div id="inventory-bar" role="toolbar" aria-label="Inventory">
     <!-- Slots populated by JS -->
   </div>
 
@@ -2498,6 +2906,63 @@ class AudioEngine {
       g.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
       osc.connect(g); g.connect(this.master);
       osc.start(now); osc.stop(now + 0.25);
+    }
+    else if (type === 'solve') {
+      // Puzzle solved: rising arpeggio (C-E-G-C)
+      [523, 659, 784, 1047].forEach((freq, i) => {
+        const osc = this.ctx.createOscillator();
+        osc.type = 'sine';
+        const g = this.ctx.createGain();
+        g.gain.setValueAtTime(0, now + i * 0.1);
+        g.gain.linearRampToValueAtTime(0.1, now + i * 0.1 + 0.05);
+        g.gain.exponentialRampToValueAtTime(0.001, now + i * 0.1 + 0.4);
+        osc.frequency.value = freq;
+        osc.connect(g); g.connect(this.master);
+        osc.start(now + i * 0.1); osc.stop(now + i * 0.1 + 0.4);
+      });
+    }
+    else if (type === 'door') {
+      // Door creak: filtered noise sweep
+      const buf = this.ctx.createBuffer(1, this.ctx.sampleRate * 0.3, this.ctx.sampleRate);
+      const d = buf.getChannelData(0);
+      for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+      const src = this.ctx.createBufferSource();
+      src.buffer = buf;
+      const filt = this.ctx.createBiquadFilter();
+      filt.type = 'bandpass';
+      filt.frequency.setValueAtTime(400, now);
+      filt.frequency.exponentialRampToValueAtTime(200, now + 0.3);
+      filt.Q.value = 8;
+      const g = this.ctx.createGain();
+      g.gain.setValueAtTime(0.08, now);
+      g.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+      src.connect(filt); filt.connect(g); g.connect(this.master);
+      src.start(now); src.stop(now + 0.35);
+    }
+    else if (type === 'tick') {
+      // Typewriter tick: tiny click
+      const osc = this.ctx.createOscillator();
+      osc.type = 'sine';
+      osc.frequency.value = 1200 + Math.random() * 400;
+      const g = this.ctx.createGain();
+      g.gain.setValueAtTime(0.03, now);
+      g.gain.exponentialRampToValueAtTime(0.001, now + 0.02);
+      osc.connect(g); g.connect(this.master);
+      osc.start(now); osc.stop(now + 0.025);
+    }
+    else if (type === 'reveal') {
+      // Reveal/unlock: shimmering tone
+      const osc1 = this.ctx.createOscillator();
+      const osc2 = this.ctx.createOscillator();
+      osc1.type = 'sine'; osc2.type = 'sine';
+      osc1.frequency.value = 660; osc2.frequency.value = 880;
+      const g = this.ctx.createGain();
+      g.gain.setValueAtTime(0.08, now);
+      g.gain.linearRampToValueAtTime(0.12, now + 0.1);
+      g.gain.exponentialRampToValueAtTime(0.001, now + 0.8);
+      osc1.connect(g); osc2.connect(g); g.connect(this.master);
+      osc1.start(now); osc2.start(now + 0.05);
+      osc1.stop(now + 0.8); osc2.stop(now + 0.8);
     }
   }
 
@@ -2801,6 +3266,62 @@ class ParticleSystem {
     }
   }
 
+  // One-shot sparkle burst (item pickup)
+  emitSparkle(x, y, count = 12) {
+    for (let i = 0; i < count; i++) {
+      const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.5;
+      const speed = 1.5 + Math.random() * 2;
+      this.particles.push({
+        x, y,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        size: Math.random() * 2.5 + 1,
+        alpha: 0.8 + Math.random() * 0.2,
+        life: 1,
+        decay: 0.015 + Math.random() * 0.01,
+        type: 'sparkle'
+      });
+    }
+  }
+
+  // Celebratory burst (puzzle solve)
+  emitSolveBurst(x, y, count = 20) {
+    for (let i = 0; i < count; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const speed = 1 + Math.random() * 3;
+      this.particles.push({
+        x, y,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed - 1,
+        size: Math.random() * 3 + 1,
+        alpha: 0.9,
+        life: 1,
+        decay: 0.01 + Math.random() * 0.008,
+        type: 'solve',
+        hue: Math.random() * 60 + 30 // gold-amber range
+      });
+    }
+  }
+
+  // Glass shatter (mirror crack)
+  emitShatter(x, y, count = 25) {
+    for (let i = 0; i < count; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const speed = 2 + Math.random() * 4;
+      this.particles.push({
+        x, y,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed + Math.random() * 2,
+        size: Math.random() * 4 + 1,
+        alpha: 0.7 + Math.random() * 0.3,
+        life: 1,
+        decay: 0.008 + Math.random() * 0.006,
+        type: 'shard',
+        rotation: Math.random() * Math.PI
+      });
+    }
+  }
+
   clear() {
     this.particles = [];
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
@@ -2888,6 +3409,57 @@ class ParticleSystem {
         this.ctx.arc(p.x, p.y, p.size * 2.5, 0, Math.PI * 2);
         this.ctx.fill();
       }
+      else if (p.type === 'sparkle') {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vx *= 0.96;
+        p.vy *= 0.96;
+        p.alpha -= p.decay;
+        if (p.alpha <= 0) { this.particles.splice(i, 1); continue; }
+        // Golden sparkle
+        this.ctx.fillStyle = `rgba(201, 169, 110, ${p.alpha})`;
+        this.ctx.beginPath();
+        this.ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        this.ctx.fill();
+        // Glow halo
+        this.ctx.fillStyle = `rgba(255, 220, 150, ${p.alpha * 0.3})`;
+        this.ctx.beginPath();
+        this.ctx.arc(p.x, p.y, p.size * 2.5, 0, Math.PI * 2);
+        this.ctx.fill();
+      }
+      else if (p.type === 'solve') {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.03; // slight gravity
+        p.vx *= 0.98;
+        p.alpha -= p.decay;
+        if (p.alpha <= 0) { this.particles.splice(i, 1); continue; }
+        const r = Math.floor(200 + p.hue * 0.8);
+        const g = Math.floor(150 + p.hue);
+        const b = Math.floor(50);
+        this.ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${p.alpha})`;
+        this.ctx.beginPath();
+        this.ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        this.ctx.fill();
+      }
+      else if (p.type === 'shard') {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.08; // gravity
+        p.vx *= 0.99;
+        p.rotation += 0.1;
+        p.alpha -= p.decay;
+        if (p.alpha <= 0) { this.particles.splice(i, 1); continue; }
+        // Glass shard — light blue-silver
+        this.ctx.save();
+        this.ctx.translate(p.x, p.y);
+        this.ctx.rotate(p.rotation);
+        this.ctx.fillStyle = `rgba(200, 210, 220, ${p.alpha})`;
+        this.ctx.fillRect(-p.size/2, -p.size/2, p.size, p.size * 1.5);
+        this.ctx.fillStyle = `rgba(255, 255, 255, ${p.alpha * 0.5})`;
+        this.ctx.fillRect(-p.size/4, -p.size/4, p.size/2, p.size);
+        this.ctx.restore();
+      }
     }
   }
 
@@ -2920,6 +3492,8 @@ class DialogueSystem {
     this.currentText = '';
     this.charIndex = 0;
     this.speed = 30;       // ms per character
+    this.audioRef = null;  // set by Game to enable typewriter ticks
+    this._tickCounter = 0; // tick every 3rd char to avoid audio spam
     this.timer = null;
     this.onComplete = null; // callback when queue fully drained
     this.skipRequested = false;
@@ -2989,6 +3563,12 @@ class DialogueSystem {
     }
 
     this.charIndex++;
+    // Typewriter tick every 3 characters
+    this._tickCounter++;
+    if (this._tickCounter >= 3 && this.audioRef) {
+      this._tickCounter = 0;
+      this.audioRef.playSfx('tick');
+    }
     const visible = this.currentText.substring(0, this.charIndex);
     this.textEl.innerHTML = visible + '<span class="cursor-blink"></span>';
 
@@ -3036,7 +3616,9 @@ class Inventory {
     // item: { id, name, icon, description }
     if (this.items.find(i => i.id === item.id)) return false;
     this.items.push(item);
+    this._newItemId = item.id; // Track for animation
     this.render();
+    this._newItemId = null;
     return true;
   }
 
@@ -3080,6 +3662,7 @@ class Inventory {
       if (this.items[i]) {
         const item = this.items[i];
         slot.classList.add('occupied');
+        if (this._newItemId === item.id) slot.classList.add('new-item');
         if (this.selected === item.id) slot.classList.add('selected');
         slot.innerHTML = `
           <span class="item-icon">${item.icon}</span>
@@ -3156,6 +3739,7 @@ class Game {
     this.audio = new AudioEngine();
     this.particles = new ParticleSystem(document.getElementById('fx-canvas'));
     this.dialogue = new DialogueSystem();
+    this.dialogue.audioRef = this.audio; // enable typewriter ticks
     this.inventory = new Inventory(document.getElementById('inventory-bar'));
     this.parallax = new Parallax();
 
@@ -3205,8 +3789,14 @@ class Game {
     this.actions = {};
     this._registerActions();
 
-    // Bind hotspot clicks
+    // Bind hotspot clicks and add ARIA attributes
     document.querySelectorAll('.hotspot').forEach(hs => {
+      // Accessibility: make hotspots focusable and labeled
+      hs.setAttribute('tabindex', '0');
+      hs.setAttribute('role', 'button');
+      const label = hs.querySelector('.hotspot-label');
+      if (label) hs.setAttribute('aria-label', label.textContent.trim());
+
       hs.addEventListener('click', (e) => {
         e.stopPropagation();
         if (this.dialogue.isActive()) return;
@@ -3214,40 +3804,82 @@ class Game {
         const action = hs.dataset.action;
         this._handleAction(action, hs);
       });
+
+      // Keyboard activation: Enter or Space
+      hs.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          e.stopPropagation();
+          hs.click();
+        }
+      });
+    });
+
+    // Global keyboard handlers
+    document.addEventListener('keydown', (e) => {
+      // Space/Enter advances dialogue
+      if ((e.key === ' ' || e.key === 'Enter') && this.dialogue.isActive()) {
+        e.preventDefault();
+        this.dialogue.advance();
+      }
+      // Escape clears inventory selection
+      if (e.key === 'Escape' && this.inventory.selected) {
+        this.inventory.clearSelection();
+      }
     });
 
     // Title screen
-    document.getElementById('play-btn').addEventListener('click', () => this.start());
-    document.getElementById('play-btn').addEventListener('keydown', (e) => {
-      if (e.code === 'Enter' || e.code === 'Space') this.start();
-    });
+    // Check for existing save and show appropriate menu
+    const existingSave = this._loadSave();
+    const playBtn = document.getElementById('play-btn');
+    const titleMenu = document.getElementById('title-menu');
+
+    if (existingSave) {
+      // Show Continue/New Game menu instead of play button
+      playBtn.style.display = 'none';
+      titleMenu.classList.add('visible');
+
+      document.getElementById('btn-continue').addEventListener('click', () => {
+        this._startContinue(existingSave);
+      });
+      document.getElementById('btn-new-game').addEventListener('click', () => {
+        this.clearSave();
+        this._startFresh();
+      });
+    } else {
+      playBtn.addEventListener('click', () => this._startFresh());
+      playBtn.addEventListener('keydown', (e) => {
+        if (e.code === 'Enter' || e.code === 'Space') this._startFresh();
+      });
+    }
   }
 
-  // ---- START ----
-  start() {
+  // ---- START (continue from save) ----
+  _startContinue(save) {
     if (this.started) return;
     this.started = true;
     this.audio.init();
+    this.flags = save.flags;
+    this.inventory.restore(save.inventory, this.itemDefs);
+    this._fadeOutTitle(() => {
+      this.goToScene(save.scene, true);
+    });
+  }
 
-    // Try to load save
-    const save = this._loadSave();
-    if (save) {
-      this.flags = save.flags;
-      this.inventory.restore(save.inventory, this.itemDefs);
-      this._fadeOutTitle(() => {
-        this.goToScene(save.scene, true);
-      });
-    } else {
-      this._fadeOutTitle(() => {
-        this.goToScene('empire', true);
-        // Intro narration
-        this.dialogue.say([
-          "You are standing on a street at night. Above you, the sky is bright afternoon blue. This should bother you more than it does.",
-          "You have the distinct feeling that you've fallen into a painting. Or perhaps the painting fell into you. The distinction feels unimportant.",
-          "A bench nearby holds something that is definitely not a pipe."
-        ]);
-      });
-    }
+  // ---- START (new game) ----
+  _startFresh() {
+    if (this.started) return;
+    this.started = true;
+    this.audio.init();
+    this._fadeOutTitle(() => {
+      this.goToScene('empire', true);
+      // Intro narration
+      this.dialogue.say([
+        "You are standing on a street at night. Above you, the sky is bright afternoon blue. This should bother you more than it does.",
+        "You have the distinct feeling that you've fallen into a painting. Or perhaps the painting fell into you. The distinction feels unimportant.",
+        "A bench nearby holds something that is definitely not a pipe."
+      ]);
+    });
   }
 
   _fadeOutTitle(cb) {
@@ -3269,6 +3901,7 @@ class Game {
     if (!newScene) { this.transitioning = false; return; }
 
     if (!immediate) {
+      this.audio.playSfx('door');
       this.audio.playSfx('transition');
       this._brushWipe();
     }
@@ -3402,6 +4035,18 @@ class Game {
   }
 
   // ---- HOTSPOT VISIBILITY (based on game state) ----
+  // Emit particle burst at a DOM element's center position
+  _emitParticlesAt(selector, type) {
+    const el = typeof selector === 'string' ? document.querySelector(selector) : selector;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const x = rect.left + rect.width / 2;
+    const y = rect.top + rect.height / 2;
+    if (type === 'sparkle') this.particles.emitSparkle(x, y, 14);
+    else if (type === 'solve') this.particles.emitSolveBurst(x, y, 22);
+    else if (type === 'shatter') this.particles.emitShatter(x, y, 30);
+  }
+
   _updateHotspots() {
     // Empire: pipe
     const pipeHs = document.getElementById('hs-pipe');
@@ -3627,6 +4272,7 @@ class Game {
         this.flags.pipeTaken = true;
         this._updateHotspots();
         this.audio.playSfx('pickup');
+        this._emitParticlesAt('#hs-pipe', 'sparkle');
         this._save();
       });
     };
@@ -3717,7 +4363,8 @@ class Game {
         this.flags.combShrunk = true;
         this.inventory.clearSelection();
         this._updateHotspots();
-        this.audio.playSfx('pickup');
+        this.audio.playSfx('solve');
+        this._emitParticlesAt('#pv-comb', 'solve');
         this._save();
       });
     };
@@ -3732,6 +4379,7 @@ class Game {
         this.flags.appleTaken = true;
         this._updateHotspots();
         this.audio.playSfx('pickup');
+        this._emitParticlesAt('#pv-apple-obj', 'sparkle');
         this._save();
       });
     };
@@ -3812,6 +4460,7 @@ class Game {
         this.flags.hatTaken = true;
         this._updateHotspots();
         this.audio.playSfx('pickup');
+        this._emitParticlesAt('#golc-catch', 'sparkle');
         this._save();
       });
     };
@@ -3860,7 +4509,8 @@ class Game {
         this.flags.easelMoved = true;
         this.inventory.clearSelection();
         this._updateHotspots();
-        this.audio.playSfx('pickup');
+        this.audio.playSfx('reveal');
+        this._emitParticlesAt('.hc-hidden-door', 'solve');
         this._save();
       });
     };
@@ -3941,7 +4591,8 @@ class Game {
         this.flags.fireCalmed = true;
         this.inventory.clearSelection();
         this._updateHotspots();
-        this.audio.playSfx('pickup');
+        this.audio.playSfx('solve');
+        this._emitParticlesAt('.fire-tuba', 'solve');
         this._save();
       });
     };
@@ -4002,7 +4653,8 @@ class Game {
         this.inventory.add(this.itemDefs.letter);
         this.flags.trainCompartmentOpen = true;
         this.inventory.clearSelection();
-        this.audio.playSfx('pickup');
+        this.audio.playSfx('solve');
+        this._emitParticlesAt('.tt-train', 'solve');
         this._save();
       });
     };
@@ -4106,7 +4758,8 @@ class Game {
         this.inventory.remove('letter');
         this.inventory.clearSelection();
         this._updateHotspots();
-        this.audio.playSfx('pickup');
+        this.audio.playSfx('reveal');
+        this._emitParticlesAt('.mr-mirror', 'shatter');
         this._save();
       });
     };
