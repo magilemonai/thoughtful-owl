@@ -287,7 +287,7 @@ export class GameScene extends Phaser.Scene {
     const { x: tileX, y: tileY } = this.player.facingTile;
     const playerPos = this.player.position;
 
-    // Check for exploration discovery first (outside farm)
+    // Check for exploration discovery first (outside farm) — always allowed
     if (!this.farmingSystem.isInFarmBounds(tileX, tileY)) {
       const result = this.explorationSystem.interact(playerPos.x, playerPos.y);
       if (result && result.reward) {
@@ -295,6 +295,9 @@ export class GameScene extends Phaser.Scene {
       }
       return;
     }
+
+    // No farming in winter — just walking and looking
+    if (!this.timeSystem.isFarmingSeason()) return;
 
     switch (tool) {
       case 'hoe': {
@@ -602,8 +605,10 @@ export class GameScene extends Phaser.Scene {
     // Update seed availability for new season
     this.updateHudSeeds();
 
-    // Late autumn frost (light frost on last day of autumn)
-    if (state.season === 'autumn' && state.seasonDay >= DAYS_PER_SEASON) {
+    // Frost: light in late autumn, heavy in winter
+    if (state.season === 'winter') {
+      this.weather.setFrost(0.5);
+    } else if (state.season === 'autumn' && state.seasonDay >= DAYS_PER_SEASON) {
       this.weather.setFrost(0.25);
     } else {
       this.weather.setFrost(0);
@@ -630,6 +635,46 @@ export class GameScene extends Phaser.Scene {
     // Light frost at start of autumn (kills non-hardy crops)
     if (newSeason === 'autumn') {
       this.farmingSystem.applyFrost(0.3);
+    }
+
+    // Winter epilogue — one contemplative day
+    if (newSeason === 'winter') {
+      this.enterWinter();
+    }
+  }
+
+  /**
+   * The winter epilogue: snow covers the land, tools are put away,
+   * the player walks slowly through what they've built.
+   * Pure vibes. Sunset triggers at the end of this day.
+   */
+  private enterWinter(): void {
+    // Snow on all grass tiles
+    for (let y = 0; y < MAP_HEIGHT_TILES; y++) {
+      for (let x = 0; x < MAP_WIDTH_TILES; x++) {
+        const tile = this.terrainLayer.getTileAt(x, y);
+        if (tile && tile.index < 8) {
+          this.terrainLayer.putTileAt(40 + tile.index % 8, x, y);
+        }
+      }
+    }
+
+    // Frost and snow weather
+    this.weather.setFrost(0.4);
+    this.weather.setWeather('snow');
+
+    // Slow the player — contemplative pace
+    this.player.setSpeedMultiplier(0.6);
+
+    // Hide farming tools — only walking and looking
+    this.hud.setWinterMode(true);
+
+    // Kill remaining crops (first real frost)
+    this.farmingSystem.applyFrost(0.9);
+
+    // Motes glow dimmer but are still present
+    for (const mote of this.motes) {
+      mote.setWinterMode(true);
     }
   }
 

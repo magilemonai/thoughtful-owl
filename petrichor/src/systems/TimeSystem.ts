@@ -17,7 +17,7 @@ import {
 } from '../config/palette';
 
 export interface TimeState {
-  day: number;           // 1-12 (or 1-5 for tutorial)
+  day: number;           // 1-13 (or 1-5 for tutorial)
   season: Season;
   seasonDay: number;     // 1-4 within the season
   timeOfDay: TimeOfDay;
@@ -144,11 +144,15 @@ export class TimeSystem {
 
   /**
    * Check if current season allows farming.
-   * All active seasons (spring/summer/autumn) are farming seasons —
-   * winter ends the run before it becomes playable.
+   * Winter is contemplative — no tilling, planting, or harvesting.
    */
   isFarmingSeason(): boolean {
-    return true;
+    return this.state.season !== 'winter';
+  }
+
+  /** Whether we're in the winter epilogue day */
+  get isWinter(): boolean {
+    return this.state.season === 'winter';
   }
 
   /** Whether this is a tutorial (first) run */

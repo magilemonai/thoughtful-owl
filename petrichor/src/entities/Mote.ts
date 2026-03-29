@@ -28,6 +28,7 @@ export class Mote {
   private bobSpeed: number;
   private bobAmplitude: number;
   private pulseSpeed: number;
+  private winterMode = false;
 
   constructor(scene: Phaser.Scene, x: number, y: number) {
     this.scene = scene;
@@ -53,6 +54,16 @@ export class Mote {
 
   show(): void { this.fadeTarget = 1; this.visible = true; }
   hide(): void { this.fadeTarget = 0; }
+
+  /** Winter: dimmer, slower, cooler glow — still present but subdued */
+  setWinterMode(on: boolean): void {
+    this.winterMode = on;
+    if (on) {
+      this.wanderSpeed *= 0.4;
+      this.bobSpeed *= 0.5;
+      this.pulseSpeed *= 0.6;
+    }
+  }
 
   setHome(x: number, y: number): void {
     this.homeX = x;
@@ -89,16 +100,20 @@ export class Mote {
     const drawX = this.x;
     const drawY = this.y + bobOffset;
 
+    // Winter: cooler, dimmer glow
+    const glowColor = this.winterMode ? COLORS.PALE_CLOUD : COLORS.PALE_GREEN;
+    const dimmer = this.winterMode ? 0.5 : 1;
+
     // Outer glow (soft, large)
-    this.sprite.fillStyle(COLORS.PALE_GREEN, this.alpha * 0.1 * pulse);
+    this.sprite.fillStyle(glowColor, this.alpha * 0.1 * pulse * dimmer);
     this.sprite.fillCircle(drawX, drawY, this.glowSize);
 
     // Mid glow
-    this.sprite.fillStyle(COLORS.PALE_GREEN, this.alpha * 0.25 * pulse);
+    this.sprite.fillStyle(glowColor, this.alpha * 0.25 * pulse * dimmer);
     this.sprite.fillCircle(drawX, drawY, this.glowSize * 0.5);
 
     // Core
-    this.sprite.fillStyle(COLORS.SOFT_WHITE, this.alpha * 0.9 * pulse);
+    this.sprite.fillStyle(COLORS.SOFT_WHITE, this.alpha * 0.9 * pulse * dimmer);
     this.sprite.fillCircle(drawX, drawY, this.size);
 
     // Tiny sparkle

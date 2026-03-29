@@ -21,8 +21,9 @@ export const PLAYER_HEIGHT = 32;
 
 // Time system
 export const DAYS_PER_SEASON = 4;
-export const SEASONS_PER_RUN = 3; // spring, summer, autumn — winter ends the run
-export const TOTAL_DAYS = DAYS_PER_SEASON * SEASONS_PER_RUN; // 12
+export const SEASONS_PER_RUN = 3; // spring, summer, autumn (farming)
+export const WINTER_DAYS = 1; // one contemplative winter day before sunset
+export const TOTAL_DAYS = DAYS_PER_SEASON * SEASONS_PER_RUN + WINTER_DAYS; // 13
 export const TUTORIAL_DAYS = 5; // first run is abbreviated (spring + 1 summer day)
 
 // Each in-game day lasts this many real seconds
@@ -59,8 +60,8 @@ export const JOYSTICK_DEAD_ZONE = 8;
 export const TAP_THRESHOLD_MS = 200;
 export const TAP_THRESHOLD_DISTANCE = 10;
 
-// Seasons (active gameplay seasons — winter triggers sunset/end)
-export const SEASON_NAMES = ['spring', 'summer', 'autumn'] as const;
+// Seasons
+export const SEASON_NAMES = ['spring', 'summer', 'autumn', 'winter'] as const;
 export const FARMING_SEASONS = ['spring', 'summer', 'autumn'] as const;
 
 // Z-depth layers

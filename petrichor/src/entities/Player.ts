@@ -25,6 +25,7 @@ export class Player {
   // Tool usage
   private toolTimer = 0;
   private currentTool: string | null = null;
+  private speedMultiplier = 1;
 
   constructor(scene: Phaser.Scene, x: number, y: number) {
     this.scene = scene;
@@ -63,6 +64,10 @@ export class Player {
     if (this.state === 'sit') {
       this.state = 'idle';
     }
+  }
+
+  setSpeedMultiplier(mult: number): void {
+    this.speedMultiplier = mult;
   }
 
   get position(): { x: number; y: number } {
@@ -116,8 +121,8 @@ export class Player {
       const nx = this.moveVector.x / len;
       const ny = this.moveVector.y / len;
 
-      this.sprite.x += nx * PLAYER_SPEED * (delta / 1000);
-      this.sprite.y += ny * PLAYER_SPEED * (delta / 1000);
+      this.sprite.x += nx * PLAYER_SPEED * this.speedMultiplier * (delta / 1000);
+      this.sprite.y += ny * PLAYER_SPEED * this.speedMultiplier * (delta / 1000);
 
       if (this.state !== 'walk') {
         this.state = 'walk';

@@ -100,7 +100,7 @@ export const DISCOVERIES: Discovery[] = [
     type: 'grove',
     description: 'A single mote, perfectly still in the cold air. It pulses slowly, like a sleeping heartbeat.',
     rarity: 0.15,
-    seasonBias: 'autumn',
+    seasonBias: 'winter',
     reward: { type: 'blessing', id: 'winter_sight' },
   },
 ];

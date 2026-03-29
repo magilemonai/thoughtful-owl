@@ -162,6 +162,12 @@ export class HUD {
   fadeOut(): void { this.targetAlpha = 0; }
   fadeIn(): void { this.targetAlpha = 1; }
 
+  /** Hide tool bar for winter — only day/season text remains */
+  setWinterMode(on: boolean): void {
+    this.toolGraphics.setVisible(!on);
+    this.seedInfoText.setVisible(!on);
+  }
+
   update(): void {
     this.alpha += (this.targetAlpha - this.alpha) * 0.05;
     this.container.setAlpha(this.alpha);
