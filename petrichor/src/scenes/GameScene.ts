@@ -916,9 +916,11 @@ export class GameScene extends Phaser.Scene {
   private setupPostProcessing(): void {
     const renderer = this.renderer;
     if (renderer instanceof Phaser.Renderer.WebGL.WebGLRenderer) {
-      if (renderer.pipelines.getPostPipeline('PaletteGrade')) {
-        this.cameras.main.setPostPipeline(PaletteShader);
+      // Ensure PaletteGrade is registered as a post pipeline
+      if (!renderer.pipelines.getPostPipeline('PaletteGrade')) {
+        renderer.pipelines.addPostPipeline('PaletteGrade', PaletteShader);
       }
+      this.cameras.main.setPostPipeline(PaletteShader);
     }
   }
 

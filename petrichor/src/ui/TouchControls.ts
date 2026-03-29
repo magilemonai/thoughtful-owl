@@ -64,7 +64,8 @@ export class TouchControls {
   private setupTouch(): void {
     this.scene.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
       // Left half = joystick
-      if (pointer.x < GAME_WIDTH * this.scene.scale.zoom * 0.5) {
+      // In FIT scale mode, pointer.x is already in game coordinates (0 to GAME_WIDTH)
+      if (pointer.x < GAME_WIDTH * 0.5) {
         if (!this.joystickActive) {
           this.joystickActive = true;
           this.joystickBaseX = pointer.x;
@@ -175,11 +176,11 @@ export class TouchControls {
     this.graphics.clear();
 
     if (this.joystickActive) {
-      const scale = this.scene.scale.zoom || 1;
-      const bx = this.joystickBaseX / scale;
-      const by = this.joystickBaseY / scale;
-      const jx = this.joystickX / scale;
-      const jy = this.joystickY / scale;
+      // Pointer coordinates are already in game space with FIT scale mode
+      const bx = this.joystickBaseX;
+      const by = this.joystickBaseY;
+      const jx = this.joystickX;
+      const jy = this.joystickY;
 
       // Base circle
       this.graphics.lineStyle(1, COLORS.SOFT_WHITE, 0.2);

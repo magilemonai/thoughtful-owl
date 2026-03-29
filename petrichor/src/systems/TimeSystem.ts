@@ -32,7 +32,8 @@ export interface TimeState {
  */
 export class TimeSystem {
   private scene: Phaser.Scene;
-  private elapsed = 0; // seconds into current day
+  // Start day at morning (skip dawn) for brighter initial visuals
+  private elapsed = DAY_DURATION_SECONDS * 0.07;
   private currentDay = 1;
   private paused = false;
   private timeScale = 1;
@@ -137,7 +138,7 @@ export class TimeSystem {
    * Reset for a new run
    */
   reset(): void {
-    this.elapsed = 0;
+    this.elapsed = DAY_DURATION_SECONDS * 0.07; // start at morning
     this.currentDay = 1;
     this.paused = false;
   }

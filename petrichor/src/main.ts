@@ -16,7 +16,7 @@ import { PaletteShader } from './rendering/PaletteShader';
  */
 
 const config: Phaser.Types.Core.GameConfig = {
-  type: Phaser.WEBGL,
+  type: Phaser.AUTO, // WEBGL preferred, Canvas fallback for mobile
   width: GAME_WIDTH,
   height: GAME_HEIGHT,
   parent: document.body,
