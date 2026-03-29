@@ -5,7 +5,6 @@ import { TitleScene } from './scenes/TitleScene';
 import { GameScene } from './scenes/GameScene';
 import { SunsetScene } from './scenes/SunsetScene';
 import { RunTransitionScene } from './scenes/RunTransitionScene';
-import { PaletteShader } from './rendering/PaletteShader';
 
 /**
  * Petrichor — A Pastoral Loop Game
@@ -63,11 +62,6 @@ const config: Phaser.Types.Core.GameConfig = {
 
   // Scenes
   scene: [BootScene, TitleScene, GameScene, SunsetScene, RunTransitionScene],
-
-  // WebGL pipeline registration
-  pipeline: {
-    PaletteGrade: PaletteShader,
-  } as unknown as Phaser.Types.Core.PipelineConfig,
 
   // Input
   input: {

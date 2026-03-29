@@ -27,7 +27,6 @@ import { TouchControls } from '../ui/TouchControls';
 import { HUD } from '../ui/HUD';
 import { ParallaxManager } from '../rendering/ParallaxManager';
 import { WeatherRenderer, WeatherType } from '../rendering/WeatherRenderer';
-import { PaletteShader } from '../rendering/PaletteShader';
 import { AmbientMixer } from '../audio/AmbientMixer';
 import { ProgressionSystem } from '../systems/ProgressionSystem';
 
@@ -914,14 +913,9 @@ export class GameScene extends Phaser.Scene {
   // --- Rendering ---
 
   private setupPostProcessing(): void {
-    const renderer = this.renderer;
-    if (renderer instanceof Phaser.Renderer.WebGL.WebGLRenderer) {
-      // Ensure PaletteGrade is registered as a post pipeline
-      if (!renderer.pipelines.getPostPipeline('PaletteGrade')) {
-        renderer.pipelines.addPostPipeline('PaletteGrade', PaletteShader);
-      }
-      this.cameras.main.setPostPipeline(PaletteShader);
-    }
+    // Post-processing shader disabled — causes black screen on mobile
+    // due to uninitialized uniform values. The sky gradient and
+    // natural tile colors provide sufficient time-of-day atmosphere.
   }
 
   private setupAudio(): void {
@@ -956,27 +950,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private updateTimeVisuals(): void {
-    const { current, next, blend } = this.timeSystem.getBlendedProfile();
-    const renderer = this.renderer;
-
-    if (renderer instanceof Phaser.Renderer.WebGL.WebGLRenderer) {
-      const pipelines = this.cameras.main.getPostPipeline(PaletteShader);
-      if (pipelines) {
-        const pipeline = Array.isArray(pipelines) ? pipelines[0] : pipelines;
-        if (pipeline instanceof PaletteShader) {
-          const blendedProfile = {
-            ...current,
-            tint: {
-              r: current.tint.r + (next.tint.r - current.tint.r) * blend,
-              g: current.tint.g + (next.tint.g - current.tint.g) * blend,
-              b: current.tint.b + (next.tint.b - current.tint.b) * blend,
-            },
-            brightness: current.brightness + (next.brightness - current.brightness) * blend,
-            saturation: current.saturation + (next.saturation - current.saturation) * blend,
-          };
-          pipeline.setTimeProfile(blendedProfile, this.timeSystem.state.season);
-        }
-      }
-    }
+    // Time-of-day visuals handled by sky gradient in renderSky()
+    // Shader-based color grading disabled for mobile compatibility
   }
 }
