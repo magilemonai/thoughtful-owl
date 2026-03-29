@@ -98,6 +98,7 @@ export class Crop {
   private stage = 0;
   private fertility: number;
   private withered = false;
+  private _daysAtMature = 0; // counts days since reaching final stage
   private swayOffset: number; // unique per-crop for wind animation
   private swayAmount = 0;
 
@@ -135,12 +136,21 @@ export class Crop {
     this.render();
   }
 
+  /** How many days this crop has been at mature stage (for timing bonus) */
+  get daysAtMature(): number { return this._daysAtMature; }
+
   /**
    * Advance growth by one day.
    * Fertility affects growth speed. Returns true if the crop advanced a stage.
    */
   advanceDay(fertility: number = 1): boolean {
-    if (this.isReadyToHarvest || this.withered) return false;
+    if (this.withered) return false;
+
+    // Track days spent mature (for harvest timing scoring)
+    if (this.isReadyToHarvest) {
+      this._daysAtMature++;
+      return false;
+    }
 
     const growthRate = this._watered ? 1.0 : 0.25;
     const fertilityBonus = 0.7 + fertility * 0.3; // fertility scales 70-100% speed

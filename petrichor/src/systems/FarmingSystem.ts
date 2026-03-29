@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { TILE_SIZE, DEPTH } from '../config/constants';
 import { COLORS, Season } from '../config/palette';
 import { Crop, CropData, CROP_CATALOG } from '../entities/Crop';
+import { ToolState } from './ProgressionSystem';
 
 export interface SoilTile {
   tileX: number;
@@ -47,6 +48,15 @@ export class FarmingSystem {
   private totalWithered = 0;
   private totalPlanted = 0;
   private daysWithAllWatered = 0;
+  private uniqueHarvestedIds: Set<string> = new Set();
+  private harvestTimingBonus = 0; // bonus for harvesting on maturity day
+
+  // Tool levels (from meta-progression)
+  private toolLevels: ToolState = { wateringCan: 0, hoe: 0, basket: 0 };
+
+  // Watering budget per day (based on tool level)
+  private waterUsesToday = 0;
+  private _maxWaterUses = 8; // recalculated from tool level
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
@@ -57,6 +67,20 @@ export class FarmingSystem {
   }
 
   get harvestedCount(): number { return this.totalHarvested; }
+  get waterUsesRemaining(): number { return Math.max(0, this._maxWaterUses - this.waterUsesToday); }
+  get maxWaterUses(): number { return this._maxWaterUses; }
+
+  /**
+   * Set tool levels from meta-progression. Affects:
+   * - wateringCan: daily water budget (8/12/18/26)
+   * - hoe: no mechanical change (tilling is instant)
+   * - basket: harvest yield multiplier (1.0/1.15/1.3/1.5)
+   */
+  setToolLevels(tools: ToolState): void {
+    this.toolLevels = { ...tools };
+    const waterBudgets = [8, 12, 18, 26];
+    this._maxWaterUses = waterBudgets[Math.min(tools.wateringCan, 3)];
+  }
 
   isInFarmBounds(tileX: number, tileY: number): boolean {
     return tileX >= this.farmMinX && tileX < this.farmMaxX
@@ -94,14 +118,19 @@ export class FarmingSystem {
 
   /**
    * Water soil at the given tile position.
+   * Limited by daily water budget (based on watering can level).
    * Returns true if successful.
    */
   water(tileX: number, tileY: number): boolean {
     const tile = this.getTile(tileX, tileY);
     if (!tile || !tile.tilled) return false;
 
+    // Enforce daily water budget
+    if (this.waterUsesToday >= this._maxWaterUses) return false;
+
     tile.watered = true;
     tile.waterLevel = 1.0;
+    this.waterUsesToday++;
     if (tile.crop) {
       tile.crop.water();
     }
@@ -129,15 +158,26 @@ export class FarmingSystem {
 
   /**
    * Harvest the crop at the given tile.
-   * Returns the yield amount, or 0 if nothing to harvest.
+   * Basket tool level boosts yield (1.0/1.15/1.3/1.5).
+   * Timing bonus if harvested the day it matures.
    */
   harvest(tileX: number, tileY: number): { yield_: number; cropData: CropData } | null {
     const tile = this.getTile(tileX, tileY);
     if (!tile || !tile.crop || !tile.crop.isReadyToHarvest) return null;
 
     const crop = tile.crop;
-    const yield_ = crop.harvest();
+    const baseYield = crop.harvest();
     const cropData = crop.data;
+
+    // Basket tool level multiplier
+    const basketMultipliers = [1.0, 1.15, 1.3, 1.5];
+    const basketMult = basketMultipliers[Math.min(this.toolLevels.basket, 3)];
+    const yield_ = Math.ceil(baseYield * basketMult);
+
+    // Timing bonus: harvested within 1 day of maturity?
+    if (crop.daysAtMature <= 1) {
+      this.harvestTimingBonus++;
+    }
 
     // Remove crop
     crop.destroy();
@@ -149,6 +189,7 @@ export class FarmingSystem {
 
     this.crops = this.crops.filter(c => c !== crop);
     this.totalHarvested++;
+    this.uniqueHarvestedIds.add(cropData.id);
     this.events.emit('crop-harvested', cropData, yield_, tileX, tileY);
     this.renderSoil();
 
@@ -159,6 +200,9 @@ export class FarmingSystem {
    * Called at end of each day — advance crops, decay water, check weather effects.
    */
   advanceDay(season: Season, weatherWasRainy: boolean): void {
+    // Reset daily water budget
+    this.waterUsesToday = 0;
+
     let allWatered = true;
     const tilledCount = this.grid.size;
 
@@ -271,27 +315,35 @@ export class FarmingSystem {
 
   /**
    * Calculate harvest quality score (0-100) for the Sunset scene.
+   *
+   * Formula rewards:
+   * - Harvest ratio (30 pts max): did you actually harvest what you planted?
+   * - Crop diversity (30 pts max): 10 pts per unique crop type harvested
+   * - Timing bonus (20 pts max): 4 pts per crop harvested on maturity day
+   * - Watering consistency (10 pts max): 2 pts per day all crops watered
+   *
+   * Penalties:
+   * - Withered crops: -8 per wither (stings)
    */
   calculateHarvestQuality(): number {
     let score = 0;
 
-    // Harvest ratio (harvested vs planted)
+    // Harvest ratio: harvested vs planted (max 30)
     if (this.totalPlanted > 0) {
-      score += (this.totalHarvested / this.totalPlanted) * 40;
+      score += (this.totalHarvested / this.totalPlanted) * 30;
     }
 
-    // Wither penalty
-    score -= this.totalWithered * 3;
+    // Crop diversity: unique types harvested (max 30, 10 pts each, caps at 3 types)
+    score += Math.min(30, this.uniqueHarvestedIds.size * 10);
 
-    // Consistent watering bonus
-    score += Math.min(20, this.daysWithAllWatered * 2);
+    // Harvest timing: bonus for picking crops on their maturity day (max 20)
+    score += Math.min(20, this.harvestTimingBonus * 4);
 
-    // Crop diversity bonus
-    const uniqueHarvested = new Set(this.crops.filter(c => c.isReadyToHarvest).map(c => c.data.id));
-    score += uniqueHarvested.size * 5;
+    // Consistent watering (max 10)
+    score += Math.min(10, this.daysWithAllWatered * 2);
 
-    // Standing ready crops at harvest time
-    score += this.crops.filter(c => c.isReadyToHarvest).length * 3;
+    // Wither penalty: hurts
+    score -= this.totalWithered * 8;
 
     return Math.max(0, Math.min(100, Math.round(score)));
   }

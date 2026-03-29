@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { TILE_SIZE, DEPTH, MAP_HEIGHT } from '../config/constants';
 import { COLORS, Season } from '../config/palette';
-import { Discovery, DISCOVERIES } from '../data/discoveries';
+import { Discovery, DiscoveryCondition, DISCOVERIES } from '../data/discoveries';
 
 interface ForestNode {
   x: number;
@@ -46,6 +46,12 @@ export class ExplorationSystem {
   // Discovery popup
   private popupContainer: Phaser.GameObjects.Container;
   private popupVisible = false;
+
+  // Condition evaluation state
+  private currentTimeOfDay = 'morning';
+  private playerStillSeconds = 0;
+  private lastPlayerX = 0;
+  private lastPlayerY = 0;
 
   // Forest dimensions (in tiles, left forest zone)
   private readonly forestW = 7;
@@ -194,8 +200,25 @@ export class ExplorationSystem {
   }
 
   /**
+   * Check if a discovery's conditions are met.
+   */
+  private meetsConditions(condition?: DiscoveryCondition): boolean {
+    if (!condition) return true;
+    if (condition.timeOfDay && !condition.timeOfDay.includes(this.currentTimeOfDay)) {
+      return false;
+    }
+    if (condition.stillnessSeconds && this.playerStillSeconds < condition.stillnessSeconds) {
+      return false;
+    }
+    if (condition.minDiscoveries && this.discoveredThisRun.size < condition.minDiscoveries) {
+      return false;
+    }
+    return true;
+  }
+
+  /**
    * Check if player is near a discovery point.
-   * Returns the discovery if within interaction range.
+   * Returns the discovery if within interaction range and conditions are met.
    */
   checkProximity(playerX: number, playerY: number): Discovery | null {
     if (this.popupVisible) return null;
@@ -208,7 +231,10 @@ export class ExplorationSystem {
       const dist = Math.sqrt(dx * dx + dy * dy);
 
       if (dist < TILE_SIZE * 1.5) {
-        return point.node.discovery || null;
+        const discovery = point.node.discovery;
+        if (discovery && this.meetsConditions(discovery.condition)) {
+          return discovery;
+        }
       }
     }
     return null;
@@ -229,7 +255,7 @@ export class ExplorationSystem {
       const dy = playerY - point.worldY;
       const dist = Math.sqrt(dx * dx + dy * dy);
 
-      if (dist < TILE_SIZE * 1.5 && point.node.discovery) {
+      if (dist < TILE_SIZE * 1.5 && point.node.discovery && this.meetsConditions(point.node.discovery.condition)) {
         point.collected = true;
         point.node.visited = true;
         this.discoveredThisRun.add(point.node.discovery.id);
@@ -253,12 +279,27 @@ export class ExplorationSystem {
   /**
    * Render discovery point indicators (glowing markers in the forest).
    */
-  update(time: number, playerX: number, playerY: number): void {
+  update(time: number, playerX: number, playerY: number, delta?: number): void {
+    // Track player stillness
+    const dt = (delta || 16) / 1000;
+    const moved = Math.abs(playerX - this.lastPlayerX) + Math.abs(playerY - this.lastPlayerY);
+    if (moved < 0.5) {
+      this.playerStillSeconds += dt;
+    } else {
+      this.playerStillSeconds = 0;
+    }
+    this.lastPlayerX = playerX;
+    this.lastPlayerY = playerY;
+
     this.indicatorGraphics.clear();
     const t = time / 1000;
 
     for (const point of this.explorationPoints) {
       if (point.collected) continue;
+
+      const discovery = point.node.discovery!;
+      // Hide indicators for discoveries whose conditions aren't met
+      if (!this.meetsConditions(discovery.condition)) continue;
 
       const dx = playerX - point.worldX;
       const dy = playerY - point.worldY;
@@ -266,8 +307,6 @@ export class ExplorationSystem {
 
       // Only show indicators when player is within detection range
       if (dist > TILE_SIZE * 12) continue;
-
-      const discovery = point.node.discovery!;
       const proximityAlpha = Math.max(0, 1 - dist / (TILE_SIZE * 10));
 
       // Different indicator styles per discovery type
@@ -420,6 +459,10 @@ export class ExplorationSystem {
     });
 
     this.scene.time.delayedCall(600, () => { timer.destroy(); gfx.destroy(); });
+  }
+
+  setTimeOfDay(timeOfDay: string): void {
+    this.currentTimeOfDay = timeOfDay;
   }
 
   get discoveryCount(): number {

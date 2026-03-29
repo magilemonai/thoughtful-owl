@@ -3,6 +3,15 @@
  * These are found in the procedural forest during exploration.
  */
 
+export interface DiscoveryCondition {
+  /** Only visible/interactable during these times of day */
+  timeOfDay?: string[];
+  /** Player must stand still for this many seconds nearby before it appears */
+  stillnessSeconds?: number;
+  /** Minimum number of previous discoveries this run to unlock */
+  minDiscoveries?: number;
+}
+
 export interface Discovery {
   id: string;
   name: string;
@@ -10,6 +19,7 @@ export interface Discovery {
   description: string;
   rarity: number; // 0-1, lower = rarer
   seasonBias?: string; // appears more often in this season
+  condition?: DiscoveryCondition;
   reward?: {
     type: 'seed' | 'knowledge' | 'blessing' | 'item';
     id: string;
@@ -102,5 +112,52 @@ export const DISCOVERIES: Discovery[] = [
     rarity: 0.15,
     seasonBias: 'winter',
     reward: { type: 'blessing', id: 'winter_sight' },
+  },
+  // --- Conditional discoveries ---
+  {
+    id: 'dawn_chorus',
+    name: 'Dawn Chorus',
+    type: 'grove',
+    description: 'The trees sing only at first light. You had to be here early to hear them.',
+    rarity: 0.25,
+    condition: { timeOfDay: ['dawn', 'early_morning'] },
+    reward: { type: 'blessing', id: 'dawn_vigor' },
+  },
+  {
+    id: 'dusk_moth',
+    name: 'Dusk Moth',
+    type: 'foraging',
+    description: 'A moth with wings like stained glass. It only flies at twilight.',
+    rarity: 0.3,
+    condition: { timeOfDay: ['dusk', 'evening'] },
+    reward: { type: 'item', id: 'moth_wing', amount: 1 },
+  },
+  {
+    id: 'listening_stone',
+    name: 'Listening Stone',
+    type: 'shrine',
+    description: 'The stone only speaks to those who are patient enough to stand still and listen.',
+    rarity: 0.2,
+    condition: { stillnessSeconds: 4 },
+    reward: { type: 'knowledge', id: 'lore_fragment_2' },
+  },
+  {
+    id: 'deep_root_shrine',
+    name: 'Deep Root Shrine',
+    type: 'shrine',
+    description: 'Hidden beneath tangled roots. Only those who have explored deeply find this place.',
+    rarity: 0.15,
+    condition: { minDiscoveries: 3 },
+    reward: { type: 'blessing', id: 'deep_root_favor' },
+  },
+  {
+    id: 'moonpetal',
+    name: 'Moonpetal',
+    type: 'seed',
+    description: 'A luminous flower that only blooms under moonlight. Its seeds glow faintly.',
+    rarity: 0.2,
+    seasonBias: 'summer',
+    condition: { timeOfDay: ['night', 'late_night'] },
+    reward: { type: 'seed', id: 'moonpetal', amount: 2 },
   },
 ];

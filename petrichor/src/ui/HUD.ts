@@ -103,7 +103,7 @@ export class HUD {
     this.seasonText.setColor(`#${seasonColors[state.season].toString(16).padStart(6, '0')}`);
   }
 
-  updateFarmStatus(needsWater: number, readyToHarvest: number): void {
+  updateFarmStatus(needsWater: number, readyToHarvest: number, waterRemaining?: number): void {
     this.needsWater = needsWater;
     this.readyToHarvest = readyToHarvest;
 
@@ -113,6 +113,9 @@ export class HUD {
     }
     if (needsWater > 0) {
       parts.push(`${needsWater} thirsty`);
+    }
+    if (waterRemaining !== undefined && waterRemaining < 5) {
+      parts.push(`${waterRemaining} water`);
     }
     this.statusText.setText(parts.join(' | '));
 

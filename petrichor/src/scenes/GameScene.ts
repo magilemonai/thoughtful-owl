@@ -29,6 +29,7 @@ import { ParallaxManager } from '../rendering/ParallaxManager';
 import { WeatherRenderer, WeatherType } from '../rendering/WeatherRenderer';
 import { PaletteShader } from '../rendering/PaletteShader';
 import { AmbientMixer } from '../audio/AmbientMixer';
+import { ProgressionSystem } from '../systems/ProgressionSystem';
 
 /**
  * Main gameplay scene.
@@ -78,6 +79,11 @@ export class GameScene extends Phaser.Scene {
   // Interaction cooldown (prevent rapid-fire)
   private interactCooldown = 0;
 
+  // Tutorial hints (run 1 only)
+  private tutorialStep = 0;
+  private tutorialText: Phaser.GameObjects.Text | null = null;
+  private tutorialBg: Phaser.GameObjects.Graphics | null = null;
+
   constructor() {
     super({ key: 'GameScene' });
   }
@@ -92,6 +98,10 @@ export class GameScene extends Phaser.Scene {
     // Initialize systems
     this.timeSystem = new TimeSystem(this, this.runNumber);
     this.farmingSystem = new FarmingSystem(this);
+
+    // Load tool levels from meta-progression
+    const progression = new ProgressionSystem();
+    this.farmingSystem.setToolLevels(progression.tools);
     this.ambientMixer = new AmbientMixer(this);
     this.weather = new WeatherRenderer(this);
 
@@ -190,6 +200,73 @@ export class GameScene extends Phaser.Scene {
 
     // Generate weather schedule for this run
     this.generateWeatherSchedule();
+
+    // Tutorial hints on first run
+    if (this.runNumber === 1) {
+      this.setupTutorial();
+    }
+  }
+
+  private setupTutorial(): void {
+    this.tutorialBg = this.add.graphics();
+    this.tutorialBg.setDepth(DEPTH.UI + 10);
+    this.tutorialBg.setScrollFactor(0);
+
+    this.tutorialText = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - 22, '', {
+      fontFamily: 'monospace',
+      fontSize: '6px',
+      color: `#${COLORS.PARCHMENT.toString(16).padStart(6, '0')}`,
+      align: 'center',
+    }).setOrigin(0.5).setDepth(DEPTH.UI + 11).setScrollFactor(0).setAlpha(0);
+
+    this.tutorialStep = 0;
+    this.showTutorialHint('Walk to the brown soil and select the HOE tool');
+  }
+
+  private showTutorialHint(text: string): void {
+    if (!this.tutorialText || !this.tutorialBg) return;
+
+    this.tutorialBg.clear();
+    this.tutorialBg.fillStyle(COLORS.MIDNIGHT, 0.85);
+    this.tutorialBg.fillRoundedRect(20, GAME_HEIGHT - 30, GAME_WIDTH - 40, 18, 3);
+
+    this.tutorialText.setText(text);
+    this.tweens.add({ targets: this.tutorialText, alpha: 1, duration: 600 });
+  }
+
+  private advanceTutorial(): void {
+    if (!this.tutorialText || !this.tutorialBg) return;
+
+    this.tutorialStep++;
+    switch (this.tutorialStep) {
+      case 1:
+        this.showTutorialHint('Tap soil to till it. Now select WATER and tap again.');
+        break;
+      case 2:
+        this.showTutorialHint('Select SEED, choose a crop, and tap tilled soil to plant.');
+        break;
+      case 3:
+        this.showTutorialHint('Water your crops daily. Explore the forest for seeds.');
+        this.time.delayedCall(6000, () => this.dismissTutorial());
+        break;
+      default:
+        this.dismissTutorial();
+    }
+  }
+
+  private dismissTutorial(): void {
+    if (this.tutorialText) {
+      this.tweens.add({
+        targets: [this.tutorialText, this.tutorialBg],
+        alpha: 0, duration: 800,
+        onComplete: () => {
+          this.tutorialText?.destroy();
+          this.tutorialBg?.destroy();
+          this.tutorialText = null;
+          this.tutorialBg = null;
+        },
+      });
+    }
   }
 
   update(time: number, delta: number): void {
@@ -210,7 +287,8 @@ export class GameScene extends Phaser.Scene {
 
     // Exploration system
     const playerPos = this.player.position;
-    this.explorationSystem.update(time, playerPos.x, playerPos.y);
+    this.explorationSystem.setTimeOfDay(this.timeSystem.state.timeOfDay);
+    this.explorationSystem.update(time, playerPos.x, playerPos.y, delta);
 
     // Spirit system
     this.spiritSystem.update(time, delta, playerPos.x, playerPos.y);
@@ -274,7 +352,7 @@ export class GameScene extends Phaser.Scene {
     // HUD
     this.hud.updateTime(this.timeSystem.state);
     const status = this.farmingSystem.getStatus();
-    this.hud.updateFarmStatus(status.needsWater, status.readyToHarvest);
+    this.hud.updateFarmStatus(status.needsWater, status.readyToHarvest, this.farmingSystem.waterUsesRemaining);
 
     // Audio
     this.ambientMixer.setTimeOfDay(this.timeSystem.state.timeOfDay, this.timeSystem.state.season);
@@ -306,6 +384,7 @@ export class GameScene extends Phaser.Scene {
           this.player.useTool('hoe');
           // Update tilemap visual
           this.terrainLayer.putTileAt(8, tileX, tileY);
+          if (this.tutorialStep === 0) this.advanceTutorial();
         }
         break;
       }
@@ -315,6 +394,7 @@ export class GameScene extends Phaser.Scene {
         if (watered) {
           this.player.useTool('water');
           this.createWaterDroplets(tileX, tileY);
+          if (this.tutorialStep === 1) this.advanceTutorial();
         }
         break;
       }
@@ -349,6 +429,7 @@ export class GameScene extends Phaser.Scene {
               this.inventory.set(seedData.id, count - 1);
               this.player.useTool('seed');
               this.updateHudSeeds();
+              if (this.tutorialStep === 2) this.advanceTutorial();
             }
           }
         }
