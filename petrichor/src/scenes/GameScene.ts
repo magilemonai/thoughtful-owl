@@ -12,13 +12,16 @@ import {
   CAMERA_BREATHE_PERIOD,
   DEPTH,
 } from '../config/constants';
-import { COLORS, TIME_PROFILES, Season } from '../config/palette';
+import { COLORS, TIME_PROFILES, Season, TimeOfDay } from '../config/palette';
 import { Player } from '../entities/Player';
 import { Mote } from '../entities/Mote';
 import { CROP_CATALOG, CropData } from '../entities/Crop';
 import { TimeSystem } from '../systems/TimeSystem';
 import { FarmingSystem } from '../systems/FarmingSystem';
 import { WindSystem } from '../systems/WindSystem';
+import { ExplorationSystem } from '../systems/ExplorationSystem';
+import { SpiritSystem } from '../systems/SpiritSystem';
+import { MaSystem, MaMomentType } from '../systems/MaSystem';
 import { TouchControls } from '../ui/TouchControls';
 import { HUD } from '../ui/HUD';
 import { ParallaxManager } from '../rendering/ParallaxManager';
@@ -35,6 +38,9 @@ export class GameScene extends Phaser.Scene {
   private timeSystem!: TimeSystem;
   private farmingSystem!: FarmingSystem;
   private windSystem!: WindSystem;
+  private explorationSystem!: ExplorationSystem;
+  private spiritSystem!: SpiritSystem;
+  private maSystem!: MaSystem;
   private touchControls!: TouchControls;
   private hud!: HUD;
   private parallax!: ParallaxManager;
@@ -44,6 +50,9 @@ export class GameScene extends Phaser.Scene {
   // Entities
   private player!: Player;
   private motes: Mote[] = [];
+
+  // Run counter (for procedural generation seeds)
+  private runNumber = 1;
 
   // Terrain
   private terrainLayer!: Phaser.Tilemaps.TilemapLayer;
@@ -64,9 +73,6 @@ export class GameScene extends Phaser.Scene {
   private weatherSchedule: Array<{ day: number; time: number; type: WeatherType; duration: number }> = [];
   private activeWeatherTimer: Phaser.Time.TimerEvent | null = null;
   private wasRainingToday = false;
-
-  // Ma system
-  private maActive = false;
 
   // Interaction cooldown (prevent rapid-fire)
   private interactCooldown = 0;
@@ -103,8 +109,21 @@ export class GameScene extends Phaser.Scene {
     this.windSystem = new WindSystem(this);
     this.windSystem.setTrees(this.treeSprites);
 
+    // Exploration system
+    this.explorationSystem = new ExplorationSystem(this);
+    this.explorationSystem.generate('spring', this.runNumber);
+
+    // Spirit system
+    this.spiritSystem = new SpiritSystem(this);
+
+    // Ma system
+    this.maSystem = new MaSystem(this);
+
     // Spawn motes
     this.spawnMotes();
+
+    // Give spirit system access to motes
+    this.spiritSystem.initMotes(this.motes);
 
     // Create player at center of farm area
     this.player = new Player(this, MAP_WIDTH / 2, MAP_HEIGHT / 2);
@@ -134,6 +153,29 @@ export class GameScene extends Phaser.Scene {
     this.farmingSystem.events.on('crop-harvested', this.onCropHarvested, this);
     this.farmingSystem.events.on('crop-withered', this.onCropWithered, this);
 
+    // Exploration events
+    this.explorationSystem.events.on('discovery', this.onDiscovery, this);
+
+    // Spirit events
+    this.spiritSystem.events.on('thornback-appears', () => {
+      // Subtle camera pull when Thornback appears
+      this.cameras.main.zoomTo(0.95, 3000, 'Sine.easeInOut');
+      this.time.delayedCall(8000, () => {
+        this.cameras.main.zoomTo(1, 2000, 'Sine.easeInOut');
+      });
+    });
+
+    // Ma system events
+    this.maSystem.events.on('ma-start', () => {
+      this.hud.fadeOut();
+    });
+    this.maSystem.events.on('ma-end', () => {
+      this.hud.fadeIn();
+    });
+    this.maSystem.events.on('ma-complete', (type: MaMomentType) => {
+      this.onMaComplete(type);
+    });
+
     // Initial state
     this.hud.updateTime(this.timeSystem.state);
     this.inventory.set('turnip', 5);
@@ -161,6 +203,31 @@ export class GameScene extends Phaser.Scene {
       this.farmingSystem.allCrops
     );
 
+    // Exploration system
+    const playerPos = this.player.position;
+    this.explorationSystem.update(time, playerPos.x, playerPos.y);
+
+    // Spirit system
+    this.spiritSystem.update(time, delta, playerPos.x, playerPos.y);
+
+    // Ma system
+    this.maSystem.update(time, delta);
+
+    // Check Ma moment triggers
+    if (!this.maSystem.isActive) {
+      const state = this.timeSystem.state;
+      const playerNearForest = playerPos.x < 9 * TILE_SIZE || playerPos.x > 21 * TILE_SIZE;
+      const playerNearRiver = playerPos.x > 24 * TILE_SIZE;
+      this.maSystem.checkTrigger(
+        state.season,
+        state.timeOfDay,
+        this.weather.isRaining,
+        playerNearForest,
+        playerNearRiver,
+        this.spiritSystem.landHealth
+      );
+    }
+
     // Interaction cooldown
     if (this.interactCooldown > 0) {
       this.interactCooldown -= delta;
@@ -168,14 +235,18 @@ export class GameScene extends Phaser.Scene {
 
     // Player input
     const input = this.touchControls.input;
-    if (!this.maActive) {
+    const maBlocking = this.maSystem.isActive || this.explorationSystem.isPopupVisible;
+    if (!maBlocking) {
       this.player.setMovement(input.moveX, input.moveY);
       if (input.tapped && this.interactCooldown <= 0) {
         this.handleInteraction();
-        this.interactCooldown = 250; // ms between interactions
+        this.interactCooldown = 250;
       }
-    } else {
+    } else if (this.maSystem.isActive) {
+      // During Ma, player stands still
       this.player.setMovement(0, 0);
+    } else {
+      this.player.setMovement(input.moveX, input.moveY);
     }
 
     // Update entities
@@ -209,6 +280,16 @@ export class GameScene extends Phaser.Scene {
   private handleInteraction(): void {
     const tool = this.hud.currentTool;
     const { x: tileX, y: tileY } = this.player.facingTile;
+    const playerPos = this.player.position;
+
+    // Check for exploration discovery first (outside farm)
+    if (!this.farmingSystem.isInFarmBounds(tileX, tileY)) {
+      const result = this.explorationSystem.interact(playerPos.x, playerPos.y);
+      if (result && result.reward) {
+        this.applyDiscoveryReward(result.reward);
+      }
+      return;
+    }
 
     switch (tool) {
       case 'hoe': {
@@ -440,12 +521,78 @@ export class GameScene extends Phaser.Scene {
 
   // --- Time events ---
 
+  private onDiscovery(discovery: { id: string; type: string }): void {
+    // Recalculate land health when discoveries are made
+    this.spiritSystem.recalculateLandHealth(
+      this.farmingSystem,
+      this.explorationSystem.discoveryCount
+    );
+  }
+
+  private applyDiscoveryReward(reward: { type: string; id: string; amount?: number }): void {
+    switch (reward.type) {
+      case 'seed':
+        this.inventory.set(reward.id, (this.inventory.get(reward.id) || 0) + (reward.amount || 1));
+        this.updateHudSeeds();
+        break;
+      case 'item':
+        this.inventory.set(reward.id, (this.inventory.get(reward.id) || 0) + (reward.amount || 1));
+        break;
+      case 'blessing':
+        this.spiritSystem.addBlessing(reward.id);
+        break;
+      case 'knowledge':
+        // Journal entries — tracked for meta-progression (future)
+        break;
+    }
+  }
+
+  private onMaComplete(type: MaMomentType): void {
+    const reward = this.maSystem.getReward();
+    if (!reward) return;
+
+    switch (reward.type) {
+      case 'fertility':
+        // Boost all soil fertility
+        for (const tile of this.farmingSystem.grid.values()) {
+          tile.fertility = Math.min(1, tile.fertility + reward.value);
+        }
+        this.farmingSystem.renderSoil();
+        break;
+      case 'motes':
+        // Spawn new motes
+        for (let i = 0; i < Math.floor(reward.value); i++) {
+          const mote = this.spiritSystem.spawnMote();
+          if (mote) this.motes.push(mote);
+        }
+        break;
+      case 'blessing':
+        this.spiritSystem.addBlessing('water_blessing');
+        break;
+      case 'knowledge':
+        // Unlock winter foraging spots
+        break;
+    }
+
+    // Recalculate land health after Ma reward
+    this.spiritSystem.recalculateLandHealth(
+      this.farmingSystem,
+      this.explorationSystem.discoveryCount
+    );
+  }
+
   private onDayChange(): void {
     const state = this.timeSystem.state;
 
     // Advance farming
     this.farmingSystem.advanceDay(state.season, this.wasRainingToday);
     this.wasRainingToday = false;
+
+    // Recalculate land health
+    this.spiritSystem.recalculateLandHealth(
+      this.farmingSystem,
+      this.explorationSystem.discoveryCount
+    );
 
     // Update seed availability for new season
     this.updateHudSeeds();
@@ -472,6 +619,9 @@ export class GameScene extends Phaser.Scene {
   }
 
   private onSeasonChange(newSeason: Season): void {
+    // Regenerate forest discoveries for new season
+    this.explorationSystem.generate(newSeason, this.runNumber);
+
     if (newSeason === 'winter') {
       // Snow on grass tiles
       for (let y = 0; y < MAP_HEIGHT_TILES; y++) {
@@ -530,10 +680,11 @@ export class GameScene extends Phaser.Scene {
   }
 
   private onCropWithered(): void {
-    // Motes dim slightly when crops wither
-    if (this.motes.length > 2) {
-      this.motes[Math.floor(Math.random() * this.motes.length)].hide();
-    }
+    // Motes dim slightly when crops wither — land health drops
+    this.spiritSystem.recalculateLandHealth(
+      this.farmingSystem,
+      this.explorationSystem.discoveryCount
+    );
   }
 
   private grantSeasonalSeeds(season: Season): void {
