@@ -147,22 +147,10 @@ export class Player {
     const frameW = PLAYER_WIDTH;
     const frameH = PLAYER_HEIGHT;
     const directions: Direction[] = ['down', 'up', 'left', 'right'];
-    // Layout: 11 columns (idle×2, walk×4, tool×3, sit×2), 4 rows (directions)
     const cols = 11;
     const rows = 4;
 
-    const canvas = document.createElement('canvas');
-    canvas.width = cols * frameW;
-    canvas.height = rows * frameH;
-    const ctx = canvas.getContext('2d')!;
-
-    // Color helpers
-    const hex = (c: number) => `#${c.toString(16).padStart(6, '0')}`;
-    const skinColor = hex(COLORS.WARM_AMBER);
-    const hairColor = hex(COLORS.EARTH);
-    const shirtColor = hex(COLORS.FOREST_GREEN);
-    const pantsColor = hex(COLORS.DARK_SLATE);
-    const bootColor = hex(COLORS.EARTH);
+    const g = this.scene.add.graphics();
 
     for (let row = 0; row < rows; row++) {
       const dir = directions[row];
@@ -175,81 +163,76 @@ export class Player {
         const isTool = col >= 6 && col < 9;
         const isSit = col >= 9;
 
-        // Clear frame
-        ctx.clearRect(ox, oy, frameW, frameH);
-
         // Body offset for walk bobbing
         const bobY = isWalk ? Math.sin(walkFrame * Math.PI / 2) * -1 : 0;
         const sitY = isSit ? 4 : 0;
 
         // Head (4×4 pixels)
-        ctx.fillStyle = skinColor;
-        ctx.fillRect(ox + 6, oy + 4 + bobY + sitY, 4, 4);
+        g.fillStyle(COLORS.WARM_AMBER);
+        g.fillRect(ox + 6, oy + 4 + bobY + sitY, 4, 4);
 
         // Hair
-        ctx.fillStyle = hairColor;
+        g.fillStyle(COLORS.EARTH);
         if (dir === 'down') {
-          ctx.fillRect(ox + 5, oy + 3 + bobY + sitY, 6, 2);
+          g.fillRect(ox + 5, oy + 3 + bobY + sitY, 6, 2);
         } else if (dir === 'up') {
-          ctx.fillRect(ox + 5, oy + 3 + bobY + sitY, 6, 3);
+          g.fillRect(ox + 5, oy + 3 + bobY + sitY, 6, 3);
         } else {
-          ctx.fillRect(ox + 6, oy + 3 + bobY + sitY, 4, 2);
-          if (dir === 'left') ctx.fillRect(ox + 5, oy + 3 + bobY + sitY, 2, 3);
-          else ctx.fillRect(ox + 9, oy + 3 + bobY + sitY, 2, 3);
+          g.fillRect(ox + 6, oy + 3 + bobY + sitY, 4, 2);
+          if (dir === 'left') g.fillRect(ox + 5, oy + 3 + bobY + sitY, 2, 3);
+          else g.fillRect(ox + 9, oy + 3 + bobY + sitY, 2, 3);
         }
 
         // Eyes (only when facing down or sides)
         if (dir === 'down') {
-          ctx.fillStyle = hex(COLORS.VOID);
-          ctx.fillRect(ox + 7, oy + 6 + bobY + sitY, 1, 1);
-          ctx.fillRect(ox + 9, oy + 6 + bobY + sitY, 1, 1);
+          g.fillStyle(COLORS.VOID);
+          g.fillRect(ox + 7, oy + 6 + bobY + sitY, 1, 1);
+          g.fillRect(ox + 9, oy + 6 + bobY + sitY, 1, 1);
         } else if (dir === 'left') {
-          ctx.fillStyle = hex(COLORS.VOID);
-          ctx.fillRect(ox + 6, oy + 6 + bobY + sitY, 1, 1);
+          g.fillStyle(COLORS.VOID);
+          g.fillRect(ox + 6, oy + 6 + bobY + sitY, 1, 1);
         } else if (dir === 'right') {
-          ctx.fillStyle = hex(COLORS.VOID);
-          ctx.fillRect(ox + 9, oy + 6 + bobY + sitY, 1, 1);
+          g.fillStyle(COLORS.VOID);
+          g.fillRect(ox + 9, oy + 6 + bobY + sitY, 1, 1);
         }
 
         // Torso (6×6)
-        ctx.fillStyle = shirtColor;
+        g.fillStyle(COLORS.FOREST_GREEN);
         const torsoY = oy + 8 + bobY + sitY;
-        ctx.fillRect(ox + 5, torsoY, 6, 6);
+        g.fillRect(ox + 5, torsoY, 6, 6);
 
         // Arms
         if (isTool) {
-          // Arms raised for tool use
-          ctx.fillRect(ox + 3, torsoY - 2, 2, 4);
-          ctx.fillRect(ox + 11, torsoY - 2, 2, 4);
+          g.fillRect(ox + 3, torsoY - 2, 2, 4);
+          g.fillRect(ox + 11, torsoY - 2, 2, 4);
         } else {
-          // Arm swing for walking
           const armSwing = isWalk ? Math.sin(walkFrame * Math.PI / 2) * 2 : 0;
-          ctx.fillRect(ox + 3, torsoY + 1 + armSwing, 2, 4);
-          ctx.fillRect(ox + 11, torsoY + 1 - armSwing, 2, 4);
+          g.fillRect(ox + 3, torsoY + 1 + armSwing, 2, 4);
+          g.fillRect(ox + 11, torsoY + 1 - armSwing, 2, 4);
         }
 
         if (!isSit) {
           // Legs (pants)
-          ctx.fillStyle = pantsColor;
+          g.fillStyle(COLORS.DARK_SLATE);
           const legY = torsoY + 6;
           const legSplit = isWalk ? Math.sin(walkFrame * Math.PI / 2) * 2 : 0;
-          ctx.fillRect(ox + 5, legY, 3, 6 + legSplit);
-          ctx.fillRect(ox + 8, legY, 3, 6 - legSplit);
+          g.fillRect(ox + 5, legY, 3, 6 + legSplit);
+          g.fillRect(ox + 8, legY, 3, 6 - legSplit);
 
           // Boots
-          ctx.fillStyle = bootColor;
-          ctx.fillRect(ox + 5, legY + 5 + legSplit, 3, 2);
-          ctx.fillRect(ox + 8, legY + 5 - legSplit, 3, 2);
+          g.fillStyle(COLORS.EARTH);
+          g.fillRect(ox + 5, legY + 5 + legSplit, 3, 2);
+          g.fillRect(ox + 8, legY + 5 - legSplit, 3, 2);
         } else {
           // Sitting: legs tucked
-          ctx.fillStyle = pantsColor;
-          ctx.fillRect(ox + 4, torsoY + 6, 8, 3);
+          g.fillStyle(COLORS.DARK_SLATE);
+          g.fillRect(ox + 4, torsoY + 6, 8, 3);
         }
       }
     }
 
-    // Add to Phaser texture cache
-    this.scene.textures.addCanvas('player', canvas);
+    g.generateTexture('player', cols * frameW, rows * frameH);
+    g.destroy();
 
     // Define spritesheet frames
     const texture = this.scene.textures.get('player');

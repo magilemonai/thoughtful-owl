@@ -6,6 +6,9 @@ import { AmbientMixer } from '../audio/AmbientMixer';
 /**
  * Boot scene: generates all procedural assets and audio,
  * shows a minimal loading screen, then transitions to Title.
+ *
+ * All textures are generated using Phaser's Graphics.generateTexture()
+ * for reliable WebGL texture creation on mobile devices.
  */
 export class BootScene extends Phaser.Scene {
   constructor() {
@@ -40,7 +43,7 @@ export class BootScene extends Phaser.Scene {
   }
 
   create(): void {
-    // Generate procedural textures
+    // Generate procedural textures using Phaser Graphics
     this.generateTerrainTileset();
     this.generateTreeSprites();
     this.generateObjectSprites();
@@ -58,32 +61,27 @@ export class BootScene extends Phaser.Scene {
     const ts = TILE_SIZE;
     const cols = 8;
     const rows = 6;
-    const canvas = document.createElement('canvas');
-    canvas.width = cols * ts;
-    canvas.height = rows * ts;
-    const ctx = canvas.getContext('2d')!;
-
-    const hex = (c: number) => `#${c.toString(16).padStart(6, '0')}`;
+    const g = this.add.graphics();
 
     // Row 0: Grass variants (8 tiles)
     for (let i = 0; i < cols; i++) {
       const ox = i * ts;
-      ctx.fillStyle = hex(COLORS.FOREST_GREEN);
-      ctx.fillRect(ox, 0, ts, ts);
+      g.fillStyle(COLORS.FOREST_GREEN);
+      g.fillRect(ox, 0, ts, ts);
 
       // Grass texture detail
-      ctx.fillStyle = hex(COLORS.FRESH_GREEN);
+      g.fillStyle(COLORS.FRESH_GREEN);
       for (let p = 0; p < 6; p++) {
         const gx = ox + Math.floor(Math.sin(i * 3 + p * 7) * 6 + 8);
         const gy = Math.floor(Math.cos(i * 5 + p * 3) * 6 + 8);
-        ctx.fillRect(gx, gy, 1, 2);
+        g.fillRect(gx, gy, 1, 2);
       }
       // Darker patches
-      ctx.fillStyle = hex(COLORS.DEEP_FOREST);
+      g.fillStyle(COLORS.DEEP_FOREST);
       for (let p = 0; p < 3; p++) {
         const gx = ox + Math.floor(Math.sin(i * 7 + p * 11) * 5 + 8);
         const gy = Math.floor(Math.cos(i * 11 + p * 7) * 5 + 8);
-        ctx.fillRect(gx, gy, 2, 1);
+        g.fillRect(gx, gy, 2, 1);
       }
     }
 
@@ -92,42 +90,39 @@ export class BootScene extends Phaser.Scene {
       const ox = i * ts;
       const oy = ts;
       const baseColor = i < 3 ? COLORS.EARTH : i < 6 ? COLORS.DEEP_AMBER : COLORS.DARK_SLATE;
-      ctx.fillStyle = hex(baseColor);
-      ctx.fillRect(ox, oy, ts, ts);
+      g.fillStyle(baseColor);
+      g.fillRect(ox, oy, ts, ts);
 
       // Furrow lines
-      ctx.fillStyle = hex(COLORS.VOID);
+      g.fillStyle(COLORS.VOID, 0.15);
       for (let line = 0; line < 3; line++) {
-        ctx.globalAlpha = 0.15;
-        ctx.fillRect(ox + 2, oy + 3 + line * 5, 12, 1);
+        g.fillRect(ox + 2, oy + 3 + line * 5, 12, 1);
       }
-      ctx.globalAlpha = 1;
     }
 
     // Row 2: Water tiles
     for (let i = 0; i < cols; i++) {
       const ox = i * ts;
       const oy = ts * 2;
-      ctx.fillStyle = hex(COLORS.STEEL_BLUE);
-      ctx.fillRect(ox, oy, ts, ts);
-      ctx.fillStyle = hex(COLORS.MUTED_SKY);
-      // Wave highlights
+      g.fillStyle(COLORS.STEEL_BLUE);
+      g.fillRect(ox, oy, ts, ts);
+      g.fillStyle(COLORS.MUTED_SKY);
       const waveOffset = i * 3;
-      ctx.fillRect(ox + (waveOffset % 12) + 2, oy + 4, 4, 1);
-      ctx.fillRect(ox + ((waveOffset + 6) % 12) + 2, oy + 10, 3, 1);
+      g.fillRect(ox + (waveOffset % 12) + 2, oy + 4, 4, 1);
+      g.fillRect(ox + ((waveOffset + 6) % 12) + 2, oy + 10, 3, 1);
     }
 
     // Row 3: Path/dirt tiles
     for (let i = 0; i < cols; i++) {
       const ox = i * ts;
       const oy = ts * 3;
-      ctx.fillStyle = hex(COLORS.WARM_GREY);
-      ctx.fillRect(ox, oy, ts, ts);
-      ctx.fillStyle = hex(COLORS.PARCHMENT);
+      g.fillStyle(COLORS.WARM_GREY);
+      g.fillRect(ox, oy, ts, ts);
+      g.fillStyle(COLORS.PARCHMENT);
       for (let p = 0; p < 4; p++) {
         const px = ox + Math.floor(Math.sin(i * 5 + p * 9) * 5 + 8);
         const py = oy + Math.floor(Math.cos(i * 9 + p * 5) * 5 + 8);
-        ctx.fillRect(px, py, 2, 1);
+        g.fillRect(px, py, 2, 1);
       }
     }
 
@@ -135,13 +130,13 @@ export class BootScene extends Phaser.Scene {
     for (let i = 0; i < cols; i++) {
       const ox = i * ts;
       const oy = ts * 4;
-      ctx.fillStyle = hex(COLORS.DEEP_FOREST);
-      ctx.fillRect(ox, oy, ts, ts);
-      ctx.fillStyle = hex(COLORS.EARTH);
+      g.fillStyle(COLORS.DEEP_FOREST);
+      g.fillRect(ox, oy, ts, ts);
+      g.fillStyle(COLORS.EARTH);
       for (let p = 0; p < 5; p++) {
         const px = ox + Math.floor(Math.sin(i * 7 + p * 13) * 6 + 8);
         const py = oy + Math.floor(Math.cos(i * 13 + p * 7) * 6 + 8);
-        ctx.fillRect(px, py, 2, 2);
+        g.fillRect(px, py, 2, 2);
       }
     }
 
@@ -149,22 +144,21 @@ export class BootScene extends Phaser.Scene {
     for (let i = 0; i < cols; i++) {
       const ox = i * ts;
       const oy = ts * 5;
-      ctx.fillStyle = hex(COLORS.PALE_CLOUD);
-      ctx.fillRect(ox, oy, ts, ts);
-      ctx.fillStyle = hex(COLORS.SOFT_WHITE);
+      g.fillStyle(COLORS.PALE_CLOUD);
+      g.fillRect(ox, oy, ts, ts);
+      g.fillStyle(COLORS.SOFT_WHITE);
       for (let p = 0; p < 4; p++) {
         const px = ox + Math.floor(Math.sin(i * 3 + p * 11) * 5 + 8);
         const py = oy + Math.floor(Math.cos(i * 7 + p * 3) * 5 + 8);
-        ctx.fillRect(px, py, 3, 2);
+        g.fillRect(px, py, 3, 2);
       }
       // Subtle grass poking through
-      ctx.fillStyle = hex(COLORS.FOREST_GREEN);
-      ctx.globalAlpha = 0.3;
-      ctx.fillRect(ox + 6 + i, oy + 10, 1, 3);
-      ctx.globalAlpha = 1;
+      g.fillStyle(COLORS.FOREST_GREEN, 0.3);
+      g.fillRect(ox + 6 + i, oy + 10, 1, 3);
     }
 
-    this.textures.addCanvas('terrain', canvas);
+    g.generateTexture('terrain', cols * ts, rows * ts);
+    g.destroy();
 
     // Define individual tile frames
     const texture = this.textures.get('terrain');
@@ -178,23 +172,18 @@ export class BootScene extends Phaser.Scene {
   }
 
   private generateTreeSprites(): void {
-    const canvas = document.createElement('canvas');
-    // 3 tree variants, each 32×48
     const treeW = 32;
     const treeH = 48;
-    canvas.width = treeW * 3;
-    canvas.height = treeH;
-    const ctx = canvas.getContext('2d')!;
-    const hex = (c: number) => `#${c.toString(16).padStart(6, '0')}`;
+    const g = this.add.graphics();
 
     for (let t = 0; t < 3; t++) {
       const ox = t * treeW;
 
       // Trunk
-      ctx.fillStyle = hex(COLORS.EARTH);
+      g.fillStyle(COLORS.EARTH);
       const trunkW = 4 + t;
       const trunkH = 16 + t * 2;
-      ctx.fillRect(ox + (treeW - trunkW) / 2, treeH - trunkH, trunkW, trunkH);
+      g.fillRect(ox + (treeW - trunkW) / 2, treeH - trunkH, trunkW, trunkH);
 
       // Canopy layers (bottom to top, getting smaller)
       const layers = 3 + t;
@@ -202,20 +191,22 @@ export class BootScene extends Phaser.Scene {
         const layerY = treeH - trunkH - 4 - l * 7;
         const layerW = 20 - l * 3 + t * 2;
         const shade = l % 2 === 0 ? COLORS.FOREST_GREEN : COLORS.DEEP_FOREST;
-        ctx.fillStyle = hex(shade);
-        ctx.fillRect(ox + (treeW - layerW) / 2, layerY, layerW, 8);
+        g.fillStyle(shade);
+        g.fillRect(ox + (treeW - layerW) / 2, layerY, layerW, 8);
       }
 
       // Highlight leaves
-      ctx.fillStyle = hex(COLORS.FRESH_GREEN);
+      g.fillStyle(COLORS.FRESH_GREEN);
       for (let h = 0; h < 4; h++) {
         const hx = ox + 8 + Math.floor(Math.sin(t * 5 + h * 7) * 8 + 8);
         const hy = 8 + Math.floor(Math.cos(t * 7 + h * 5) * 8);
-        ctx.fillRect(hx, hy, 2, 2);
+        g.fillRect(hx, hy, 2, 2);
       }
     }
 
-    this.textures.addCanvas('trees', canvas);
+    g.generateTexture('trees', treeW * 3, treeH);
+    g.destroy();
+
     const texture = this.textures.get('trees');
     for (let i = 0; i < 3; i++) {
       texture.add(i, 0, i * treeW, 0, treeW, treeH);
@@ -223,60 +214,57 @@ export class BootScene extends Phaser.Scene {
   }
 
   private generateObjectSprites(): void {
-    const canvas = document.createElement('canvas');
     const size = 16;
-    // Objects: rock, bush, flower, mushroom, stump
     const count = 5;
-    canvas.width = size * count;
-    canvas.height = size;
-    const ctx = canvas.getContext('2d')!;
-    const hex = (c: number) => `#${c.toString(16).padStart(6, '0')}`;
+    const g = this.add.graphics();
 
     // Rock
-    ctx.fillStyle = hex(COLORS.STONE_GREY);
-    ctx.fillRect(3, 8, 10, 6);
-    ctx.fillRect(5, 6, 6, 3);
-    ctx.fillStyle = hex(COLORS.WARM_GREY);
-    ctx.fillRect(5, 8, 3, 2);
+    g.fillStyle(COLORS.STONE_GREY);
+    g.fillRect(3, 8, 10, 6);
+    g.fillRect(5, 6, 6, 3);
+    g.fillStyle(COLORS.WARM_GREY);
+    g.fillRect(5, 8, 3, 2);
 
     // Bush
     let ox = size;
-    ctx.fillStyle = hex(COLORS.FOREST_GREEN);
-    ctx.fillRect(ox + 3, 6, 10, 8);
-    ctx.fillStyle = hex(COLORS.FRESH_GREEN);
-    ctx.fillRect(ox + 5, 5, 6, 4);
-    ctx.fillStyle = hex(COLORS.PALE_GREEN);
-    ctx.fillRect(ox + 6, 6, 2, 2);
+    g.fillStyle(COLORS.FOREST_GREEN);
+    g.fillRect(ox + 3, 6, 10, 8);
+    g.fillStyle(COLORS.FRESH_GREEN);
+    g.fillRect(ox + 5, 5, 6, 4);
+    g.fillStyle(COLORS.PALE_GREEN);
+    g.fillRect(ox + 6, 6, 2, 2);
 
     // Flower
     ox = size * 2;
-    ctx.fillStyle = hex(COLORS.FOREST_GREEN);
-    ctx.fillRect(ox + 7, 8, 2, 6);
-    ctx.fillStyle = hex(COLORS.SOFT_PINK);
-    ctx.fillRect(ox + 6, 5, 4, 4);
-    ctx.fillStyle = hex(COLORS.PALE_GOLD);
-    ctx.fillRect(ox + 7, 6, 2, 2);
+    g.fillStyle(COLORS.FOREST_GREEN);
+    g.fillRect(ox + 7, 8, 2, 6);
+    g.fillStyle(COLORS.SOFT_PINK);
+    g.fillRect(ox + 6, 5, 4, 4);
+    g.fillStyle(COLORS.PALE_GOLD);
+    g.fillRect(ox + 7, 6, 2, 2);
 
     // Mushroom
     ox = size * 3;
-    ctx.fillStyle = hex(COLORS.PARCHMENT);
-    ctx.fillRect(ox + 7, 9, 2, 5);
-    ctx.fillStyle = hex(COLORS.ROSE_RED);
-    ctx.fillRect(ox + 4, 6, 8, 4);
-    ctx.fillStyle = hex(COLORS.SOFT_WHITE);
-    ctx.fillRect(ox + 6, 7, 2, 1);
-    ctx.fillRect(ox + 9, 7, 1, 1);
+    g.fillStyle(COLORS.PARCHMENT);
+    g.fillRect(ox + 7, 9, 2, 5);
+    g.fillStyle(COLORS.ROSE_RED);
+    g.fillRect(ox + 4, 6, 8, 4);
+    g.fillStyle(COLORS.SOFT_WHITE);
+    g.fillRect(ox + 6, 7, 2, 1);
+    g.fillRect(ox + 9, 7, 1, 1);
 
     // Stump
     ox = size * 4;
-    ctx.fillStyle = hex(COLORS.EARTH);
-    ctx.fillRect(ox + 4, 8, 8, 6);
-    ctx.fillStyle = hex(COLORS.DEEP_AMBER);
-    ctx.fillRect(ox + 5, 8, 6, 2);
-    ctx.fillStyle = hex(COLORS.WARM_GREY);
-    ctx.fillRect(ox + 6, 9, 4, 1);
+    g.fillStyle(COLORS.EARTH);
+    g.fillRect(ox + 4, 8, 8, 6);
+    g.fillStyle(COLORS.DEEP_AMBER);
+    g.fillRect(ox + 5, 8, 6, 2);
+    g.fillStyle(COLORS.WARM_GREY);
+    g.fillRect(ox + 6, 9, 4, 1);
 
-    this.textures.addCanvas('objects', canvas);
+    g.generateTexture('objects', size * count, size);
+    g.destroy();
+
     const texture = this.textures.get('objects');
     for (let i = 0; i < count; i++) {
       texture.add(i, 0, i * size, 0, size, size);
