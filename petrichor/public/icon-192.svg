@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="192" height="192" viewBox="0 0 192 192">
+  <rect width="192" height="192" fill="#1a1a2e" rx="24"/>
+  <circle cx="96" cy="86" r="8" fill="#95d5b2" opacity="0.8"/>
+  <circle cx="96" cy="86" r="3" fill="#f5f0e8" opacity="0.9"/>
+  <circle cx="78" cy="100" r="5" fill="#95d5b2" opacity="0.5"/>
+  <circle cx="114" cy="98" r="4" fill="#95d5b2" opacity="0.4"/>
+  <text x="96" y="140" text-anchor="middle" font-family="monospace" font-size="18" fill="#d4cfc4" letter-spacing="3">petrichor</text>
+</svg>

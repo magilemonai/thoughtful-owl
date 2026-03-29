@@ -85,6 +85,16 @@ export class TouchControls {
       if (this.joystickActive && pointer.id === this.joystickPointerId) {
         this.joystickX = pointer.x;
         this.joystickY = pointer.y;
+
+        // Dynamic base drift — if finger exceeds radius, base follows
+        const dx = this.joystickX - this.joystickBaseX;
+        const dy = this.joystickY - this.joystickBaseY;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist > JOYSTICK_RADIUS * 1.3) {
+          const angle = Math.atan2(dy, dx);
+          this.joystickBaseX = this.joystickX - Math.cos(angle) * JOYSTICK_RADIUS;
+          this.joystickBaseY = this.joystickY - Math.sin(angle) * JOYSTICK_RADIUS;
+        }
       }
     });
 
@@ -103,6 +113,11 @@ export class TouchControls {
           this.tapped = true;
           this.tapWorldX = pointer.worldX;
           this.tapWorldY = pointer.worldY;
+
+          // Haptic feedback on mobile (where supported)
+          if (navigator.vibrate) {
+            navigator.vibrate(10);
+          }
         }
       }
     });

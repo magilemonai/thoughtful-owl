@@ -4,6 +4,7 @@ import { BootScene } from './scenes/BootScene';
 import { TitleScene } from './scenes/TitleScene';
 import { GameScene } from './scenes/GameScene';
 import { SunsetScene } from './scenes/SunsetScene';
+import { RunTransitionScene } from './scenes/RunTransitionScene';
 import { PaletteShader } from './rendering/PaletteShader';
 
 /**
@@ -61,7 +62,7 @@ const config: Phaser.Types.Core.GameConfig = {
   },
 
   // Scenes
-  scene: [BootScene, TitleScene, GameScene, SunsetScene],
+  scene: [BootScene, TitleScene, GameScene, SunsetScene, RunTransitionScene],
 
   // WebGL pipeline registration
   pipeline: {
