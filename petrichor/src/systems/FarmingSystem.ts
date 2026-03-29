@@ -56,6 +56,8 @@ export class FarmingSystem {
     this.soilGraphics.setDepth(DEPTH.SOIL);
   }
 
+  get harvestedCount(): number { return this.totalHarvested; }
+
   isInFarmBounds(tileX: number, tileY: number): boolean {
     return tileX >= this.farmMinX && tileX < this.farmMaxX
       && tileY >= this.farmMinY && tileY < this.farmMaxY;

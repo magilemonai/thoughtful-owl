@@ -3,6 +3,8 @@ import {
   DAY_DURATION_SECONDS,
   DAYS_PER_SEASON,
   SEASONS_PER_RUN,
+  TOTAL_DAYS,
+  TUTORIAL_DAYS,
   TIME_PHASE_DURATIONS,
   SEASON_NAMES,
 } from '../config/constants';
@@ -15,7 +17,7 @@ import {
 } from '../config/palette';
 
 export interface TimeState {
-  day: number;           // 1-16
+  day: number;           // 1-12 (or 1-5 for tutorial)
   season: Season;
   seasonDay: number;     // 1-4 within the season
   timeOfDay: TimeOfDay;
@@ -34,13 +36,17 @@ export class TimeSystem {
   private currentDay = 1;
   private paused = false;
   private timeScale = 1;
+  private isTutorial = false;
+  private maxDays = TOTAL_DAYS;
 
   // Event emitter for time changes
   readonly events: Phaser.Events.EventEmitter;
 
-  constructor(scene: Phaser.Scene) {
+  constructor(scene: Phaser.Scene, runNumber: number = 1) {
     this.scene = scene;
     this.events = new Phaser.Events.EventEmitter();
+    this.isTutorial = runNumber === 1;
+    this.maxDays = this.isTutorial ? TUTORIAL_DAYS : TOTAL_DAYS;
   }
 
   get state(): TimeState {
@@ -95,7 +101,7 @@ export class TimeSystem {
       this.elapsed = 0;
       this.currentDay++;
 
-      if (this.currentDay > DAYS_PER_SEASON * SEASONS_PER_RUN) {
+      if (this.currentDay > this.maxDays) {
         this.events.emit('run-end');
         return;
       }
@@ -137,10 +143,14 @@ export class TimeSystem {
   }
 
   /**
-   * Check if current season allows farming
+   * Check if current season allows farming.
+   * All active seasons (spring/summer/autumn) are farming seasons —
+   * winter ends the run before it becomes playable.
    */
   isFarmingSeason(): boolean {
-    const season = this.state.season;
-    return season !== 'winter';
+    return true;
   }
+
+  /** Whether this is a tutorial (first) run */
+  get tutorial(): boolean { return this.isTutorial; }
 }

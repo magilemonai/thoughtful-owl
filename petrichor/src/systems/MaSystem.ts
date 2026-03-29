@@ -106,7 +106,7 @@ export class MaSystem {
       },
       {
         type: 'moonlit_silence',
-        season: 'winter',
+        season: 'autumn',
         name: 'Moonlit Silence',
         description: 'The river holds the moon. Sit and watch.',
         rewardDescription: 'The Greycurrent grants its blessing.',
@@ -169,7 +169,7 @@ export class MaSystem {
           break;
 
         case 'moonlit_silence':
-          // Triggers at night near the river in winter
+          // Triggers at night near the river in autumn
           if (playerNearRiver && timeOfDay === 'night' && landHealth > 0.4) {
             this.triggerMoment(moment);
             return true;

@@ -10,6 +10,7 @@ interface RainDrop {
   speed: number;
   length: number;
   alpha: number;
+  active: boolean;
 }
 
 interface Snowflake {
@@ -20,6 +21,7 @@ interface Snowflake {
   driftPhase: number;
   size: number;
   alpha: number;
+  active: boolean;
 }
 
 interface Splash {
@@ -28,11 +30,17 @@ interface Splash {
   life: number;
   maxLife: number;
   size: number;
+  active: boolean;
 }
+
+// Pool sizes — pre-allocated, never resized
+const MAX_RAIN_DROPS = 300;
+const MAX_SNOWFLAKES = 120;
+const MAX_SPLASHES = 60;
 
 /**
  * Renders weather particle effects: rain, fog, snow, wind, frost, lightning.
- * All effects are procedural — no sprite assets needed.
+ * Uses pre-allocated particle pools to avoid GC pressure on mobile.
  */
 export class WeatherRenderer {
   private scene: Phaser.Scene;
@@ -41,26 +49,29 @@ export class WeatherRenderer {
   private transitionProgress = 1;
   private transitionSpeed = 0.008;
 
-  // Rain system
-  private rainDrops: RainDrop[] = [];
+  // Pre-allocated particle pools
+  private rainPool: RainDrop[];
+  private activeRainCount = 0;
+  private snowPool: Snowflake[];
+  private activeSnowCount = 0;
+  private splashPool: Splash[];
+  private activeSplashCount = 0;
+
+  // Graphics layers
   private rainGraphics: Phaser.GameObjects.Graphics;
-  private splashes: Splash[] = [];
-
-  // Snow system
-  private snowflakes: Snowflake[] = [];
-
-  // Fog overlay
   private fogOverlay: Phaser.GameObjects.Graphics;
+  private frostOverlay: Phaser.GameObjects.Graphics;
+  private lightningOverlay: Phaser.GameObjects.Graphics;
+
+  // Fog
   private fogAlpha = 0;
   private fogTime = 0;
 
-  // Frost overlay
-  private frostOverlay: Phaser.GameObjects.Graphics;
+  // Frost
   private frostAlpha = 0;
   private targetFrostAlpha = 0;
 
   // Lightning
-  private lightningOverlay: Phaser.GameObjects.Graphics;
   private lightningAlpha = 0;
   private lightningTimer = 0;
   private nextLightningAt = 0;
@@ -93,6 +104,22 @@ export class WeatherRenderer {
     this.lightningOverlay = scene.add.graphics();
     this.lightningOverlay.setDepth(DEPTH.WEATHER_FRONT + 10);
     this.lightningOverlay.setScrollFactor(0);
+
+    // Pre-allocate all particle pools
+    this.rainPool = new Array(MAX_RAIN_DROPS);
+    for (let i = 0; i < MAX_RAIN_DROPS; i++) {
+      this.rainPool[i] = { x: 0, y: 0, speed: 0, length: 0, alpha: 0, active: false };
+    }
+
+    this.snowPool = new Array(MAX_SNOWFLAKES);
+    for (let i = 0; i < MAX_SNOWFLAKES; i++) {
+      this.snowPool[i] = { x: 0, y: 0, speed: 0, drift: 0, driftPhase: 0, size: 0, alpha: 0, active: false };
+    }
+
+    this.splashPool = new Array(MAX_SPLASHES);
+    for (let i = 0; i < MAX_SPLASHES; i++) {
+      this.splashPool[i] = { x: 0, y: 0, life: 0, maxLife: 0, size: 0, active: false };
+    }
   }
 
   get windStrength(): number { return this._windStrength; }
@@ -160,7 +187,6 @@ export class WeatherRenderer {
     if (this.windGustTimer > 4000 + Math.random() * 6000) {
       this.windGustTimer = 0;
       if (this._windStrength > 0.5) {
-        // Gust: temporarily boost wind
         const savedTarget = this._targetWindStrength;
         this._targetWindStrength = savedTarget * 1.8;
         this.scene.time.delayedCall(800 + Math.random() * 600, () => {
@@ -172,7 +198,7 @@ export class WeatherRenderer {
     this.updateRain(delta, effectiveWeather);
     this.updateSnow(delta, effectiveWeather);
     this.updateFog(delta, effectiveWeather, time);
-    this.updateFrost(delta);
+    this.updateFrost();
     this.updateLightning(delta, effectiveWeather);
     this.updateScreenShake();
     this.render(time);
@@ -182,93 +208,105 @@ export class WeatherRenderer {
     const isRaining = weather === 'rain_light' || weather === 'rain_heavy' || weather === 'storm';
     const targetCount = weather === 'rain_light' ? 80
       : weather === 'rain_heavy' ? 180
-      : weather === 'storm' ? 300
+      : weather === 'storm' ? MAX_RAIN_DROPS
       : 0;
 
-    while (this.rainDrops.length < targetCount) {
-      this.rainDrops.push(this.createRainDrop(true));
+    // Activate/deactivate drops to match target count
+    while (this.activeRainCount < targetCount) {
+      const drop = this.rainPool[this.activeRainCount];
+      this.initRainDrop(drop, true);
+      drop.active = true;
+      this.activeRainCount++;
     }
-    while (this.rainDrops.length > targetCount) {
-      this.rainDrops.pop();
+    while (this.activeRainCount > targetCount) {
+      this.activeRainCount--;
+      this.rainPool[this.activeRainCount].active = false;
     }
 
     if (!isRaining) {
-      this.splashes = [];
+      this.activeSplashCount = 0;
       return;
     }
 
     const windOffsetX = Math.sin(this._windAngle) * this._windStrength * 2;
 
-    for (const drop of this.rainDrops) {
+    for (let i = 0; i < this.activeRainCount; i++) {
+      const drop = this.rainPool[i];
       drop.y += drop.speed * (delta / 16);
       drop.x += windOffsetX * (delta / 16);
 
       if (drop.y > GAME_HEIGHT + 10) {
-        // Spawn splash at landing point
-        if (Math.random() < 0.3) {
-          this.splashes.push({
-            x: drop.x,
-            y: GAME_HEIGHT - 5 - Math.random() * 30,
-            life: 1,
-            maxLife: 1,
-            size: 1 + Math.random() * 2,
-          });
+        // Spawn splash at landing point (reuse from pool)
+        if (Math.random() < 0.3 && this.activeSplashCount < MAX_SPLASHES) {
+          const splash = this.splashPool[this.activeSplashCount];
+          splash.x = drop.x;
+          splash.y = GAME_HEIGHT - 5 - Math.random() * 30;
+          splash.life = 1;
+          splash.maxLife = 1;
+          splash.size = 1 + Math.random() * 2;
+          splash.active = true;
+          this.activeSplashCount++;
         }
-        this.resetRainDrop(drop);
+        this.initRainDrop(drop, false);
       }
       if (drop.x > GAME_WIDTH + 20 || drop.x < -20) {
-        this.resetRainDrop(drop);
+        this.initRainDrop(drop, false);
       }
     }
 
-    // Update splashes
-    for (let i = this.splashes.length - 1; i >= 0; i--) {
-      this.splashes[i].life -= 0.06 * (delta / 16);
-      if (this.splashes[i].life <= 0) {
-        this.splashes.splice(i, 1);
+    // Update splashes — compact active ones forward
+    let writeIdx = 0;
+    for (let i = 0; i < this.activeSplashCount; i++) {
+      const s = this.splashPool[i];
+      s.life -= 0.06 * (delta / 16);
+      if (s.life > 0) {
+        if (writeIdx !== i) {
+          // Swap to compact
+          const tmp = this.splashPool[writeIdx];
+          this.splashPool[writeIdx] = this.splashPool[i];
+          this.splashPool[i] = tmp;
+        }
+        writeIdx++;
+      } else {
+        s.active = false;
       }
     }
+    this.activeSplashCount = writeIdx;
   }
 
-  private createRainDrop(randomY: boolean): RainDrop {
-    return {
-      x: Math.random() * (GAME_WIDTH + 40) - 20,
-      y: randomY ? Math.random() * GAME_HEIGHT : -10 - Math.random() * 30,
-      speed: 3.5 + Math.random() * 3,
-      length: 4 + Math.random() * 6,
-      alpha: 0.15 + Math.random() * 0.35,
-    };
-  }
-
-  private resetRainDrop(drop: RainDrop): void {
+  private initRainDrop(drop: RainDrop, randomY: boolean): void {
     drop.x = Math.random() * (GAME_WIDTH + 40) - 20;
-    drop.y = -10 - Math.random() * 30;
+    drop.y = randomY ? Math.random() * GAME_HEIGHT : -10 - Math.random() * 30;
     drop.speed = 3.5 + Math.random() * 3;
+    drop.length = 4 + Math.random() * 6;
     drop.alpha = 0.15 + Math.random() * 0.35;
   }
 
   private updateSnow(delta: number, weather: WeatherType): void {
     const isSnowing = weather === 'snow';
-    const targetCount = isSnowing ? 120 : 0;
+    const targetCount = isSnowing ? MAX_SNOWFLAKES : 0;
 
-    while (this.snowflakes.length < targetCount) {
-      this.snowflakes.push({
-        x: Math.random() * GAME_WIDTH,
-        y: Math.random() * GAME_HEIGHT,
-        speed: 0.3 + Math.random() * 0.6,
-        drift: 0.3 + Math.random() * 0.5,
-        driftPhase: Math.random() * Math.PI * 2,
-        size: 0.5 + Math.random() * 1.5,
-        alpha: 0.3 + Math.random() * 0.5,
-      });
+    while (this.activeSnowCount < targetCount) {
+      const flake = this.snowPool[this.activeSnowCount];
+      flake.x = Math.random() * GAME_WIDTH;
+      flake.y = Math.random() * GAME_HEIGHT;
+      flake.speed = 0.3 + Math.random() * 0.6;
+      flake.drift = 0.3 + Math.random() * 0.5;
+      flake.driftPhase = Math.random() * Math.PI * 2;
+      flake.size = 0.5 + Math.random() * 1.5;
+      flake.alpha = 0.3 + Math.random() * 0.5;
+      flake.active = true;
+      this.activeSnowCount++;
     }
-    while (this.snowflakes.length > targetCount) {
-      this.snowflakes.pop();
+    while (this.activeSnowCount > targetCount) {
+      this.activeSnowCount--;
+      this.snowPool[this.activeSnowCount].active = false;
     }
 
     if (!isSnowing) return;
 
-    for (const flake of this.snowflakes) {
+    for (let i = 0; i < this.activeSnowCount; i++) {
+      const flake = this.snowPool[i];
       flake.y += flake.speed * (delta / 16);
       flake.driftPhase += 0.02;
       flake.x += Math.sin(flake.driftPhase) * flake.drift * (delta / 16);
@@ -289,7 +327,7 @@ export class WeatherRenderer {
     this.fogTime = time;
   }
 
-  private updateFrost(_delta: number): void {
+  private updateFrost(): void {
     this.frostAlpha += (this.targetFrostAlpha - this.frostAlpha) * 0.02;
   }
 
@@ -302,23 +340,19 @@ export class WeatherRenderer {
     this.lightningTimer += delta;
 
     if (this.lightningTimer >= this.nextLightningAt) {
-      // Flash!
       this.lightningAlpha = 0.6 + Math.random() * 0.3;
       this.screenShakeAmount = 1.5 + Math.random() * 2;
 
-      // Double flash sometimes
       if (Math.random() < 0.4) {
         this.scene.time.delayedCall(100 + Math.random() * 150, () => {
           this.lightningAlpha = 0.4 + Math.random() * 0.2;
         });
       }
 
-      // Schedule next
       this.lightningTimer = 0;
       this.nextLightningAt = 4000 + Math.random() * 10000;
     }
 
-    // Decay flash
     this.lightningAlpha *= 0.88;
   }
 
@@ -333,10 +367,12 @@ export class WeatherRenderer {
   }
 
   private render(time: number): void {
-    // --- Rain ---
     this.rainGraphics.clear();
-    if (this.rainDrops.length > 0) {
-      for (const drop of this.rainDrops) {
+
+    // --- Rain ---
+    if (this.activeRainCount > 0) {
+      for (let i = 0; i < this.activeRainCount; i++) {
+        const drop = this.rainPool[i];
         this.rainGraphics.lineStyle(1, COLORS.PALE_CLOUD, drop.alpha);
         const dx = Math.sin(this._windAngle) * drop.length;
         const dy = Math.cos(this._windAngle) * drop.length;
@@ -344,7 +380,8 @@ export class WeatherRenderer {
       }
 
       // Splashes
-      for (const s of this.splashes) {
+      for (let i = 0; i < this.activeSplashCount; i++) {
+        const s = this.splashPool[i];
         const expand = (1 - s.life) * s.size * 2;
         this.rainGraphics.lineStyle(0.5, COLORS.PALE_CLOUD, s.life * 0.4);
         this.rainGraphics.strokeCircle(s.x, s.y, expand);
@@ -352,11 +389,11 @@ export class WeatherRenderer {
     }
 
     // --- Snow ---
-    if (this.snowflakes.length > 0) {
-      for (const flake of this.snowflakes) {
+    if (this.activeSnowCount > 0) {
+      for (let i = 0; i < this.activeSnowCount; i++) {
+        const flake = this.snowPool[i];
         this.rainGraphics.fillStyle(COLORS.SOFT_WHITE, flake.alpha);
         this.rainGraphics.fillCircle(flake.x, flake.y, flake.size);
-        // Subtle glow
         this.rainGraphics.fillStyle(COLORS.PALE_CLOUD, flake.alpha * 0.2);
         this.rainGraphics.fillCircle(flake.x, flake.y, flake.size * 2);
       }
@@ -365,11 +402,9 @@ export class WeatherRenderer {
     // --- Fog ---
     this.fogOverlay.clear();
     if (this.fogAlpha > 0.005) {
-      // Base fog layer
       this.fogOverlay.fillStyle(COLORS.PARCHMENT, this.fogAlpha * 0.6);
       this.fogOverlay.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
 
-      // Rolling fog wisps (multiple overlapping sine waves)
       for (let i = 0; i < 5; i++) {
         const baseY = GAME_HEIGHT * (0.25 + i * 0.15);
         const waveOffset = Math.sin(this.fogTime * 0.0002 + i * 1.7) * 15;
@@ -377,7 +412,6 @@ export class WeatherRenderer {
 
         if (bandAlpha > 0) {
           this.fogOverlay.fillStyle(COLORS.SOFT_WHITE, bandAlpha);
-          // Draw as horizontal band with soft edges
           for (let x = 0; x < GAME_WIDTH; x += 4) {
             const localY = baseY + waveOffset + Math.sin(x * 0.03 + this.fogTime * 0.0001 + i) * 8;
             const h = 12 + Math.sin(x * 0.05 + i * 3) * 4;
@@ -390,25 +424,21 @@ export class WeatherRenderer {
     // --- Frost ---
     this.frostOverlay.clear();
     if (this.frostAlpha > 0.01) {
-      // Screen-edge frost vignette
       this.frostOverlay.fillStyle(COLORS.SOFT_WHITE, this.frostAlpha * 0.15);
       this.frostOverlay.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
 
-      // Frost crystals at edges
       const crystalAlpha = this.frostAlpha * 0.5;
       this.frostOverlay.fillStyle(COLORS.PALE_CLOUD, crystalAlpha);
 
-      // Top edge frost
+      // Edge frost
       for (let x = 0; x < GAME_WIDTH; x += 3) {
         const h = (Math.sin(x * 0.1 + 47) * 0.5 + 0.5) * 8 * this.frostAlpha;
         this.frostOverlay.fillRect(x, 0, 2, h);
       }
-      // Bottom edge frost
       for (let x = 0; x < GAME_WIDTH; x += 3) {
         const h = (Math.sin(x * 0.12 + 23) * 0.5 + 0.5) * 6 * this.frostAlpha;
         this.frostOverlay.fillRect(x, GAME_HEIGHT - h, 2, h);
       }
-      // Left/right edge frost
       for (let y = 0; y < GAME_HEIGHT; y += 3) {
         const wL = (Math.sin(y * 0.09 + 17) * 0.5 + 0.5) * 5 * this.frostAlpha;
         const wR = (Math.sin(y * 0.11 + 31) * 0.5 + 0.5) * 5 * this.frostAlpha;
@@ -416,7 +446,7 @@ export class WeatherRenderer {
         this.frostOverlay.fillRect(GAME_WIDTH - wR, y, wR, 2);
       }
 
-      // Random ice crystal specks
+      // Frost crystal specks
       this.frostOverlay.fillStyle(COLORS.SOFT_WHITE, crystalAlpha * 0.6);
       for (let i = 0; i < 20; i++) {
         const cx = (Math.sin(i * 127.1 + 311.7) * 0.5 + 0.5) * GAME_WIDTH;

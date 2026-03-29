@@ -7,6 +7,7 @@ import {
   MAP_HEIGHT_TILES,
   MAP_WIDTH,
   MAP_HEIGHT,
+  DAYS_PER_SEASON,
   CAMERA_LERP,
   CAMERA_BREATHE_AMPLITUDE,
   CAMERA_BREATHE_PERIOD,
@@ -81,11 +82,15 @@ export class GameScene extends Phaser.Scene {
     super({ key: 'GameScene' });
   }
 
+  init(data?: { runNumber?: number }): void {
+    this.runNumber = data?.runNumber ?? 1;
+  }
+
   create(): void {
     this.cameras.main.fadeIn(1500, 0x0d, 0x0b, 0x0e);
 
     // Initialize systems
-    this.timeSystem = new TimeSystem(this);
+    this.timeSystem = new TimeSystem(this, this.runNumber);
     this.farmingSystem = new FarmingSystem(this);
     this.ambientMixer = new AmbientMixer(this);
     this.weather = new WeatherRenderer(this);
@@ -597,9 +602,9 @@ export class GameScene extends Phaser.Scene {
     // Update seed availability for new season
     this.updateHudSeeds();
 
-    // Winter frost (continuous)
-    if (state.season === 'winter') {
-      this.weather.setFrost(0.4 + state.seasonDay * 0.1);
+    // Late autumn frost (light frost on last day of autumn)
+    if (state.season === 'autumn' && state.seasonDay >= DAYS_PER_SEASON) {
+      this.weather.setFrost(0.25);
     } else {
       this.weather.setFrost(0);
     }
@@ -622,28 +627,9 @@ export class GameScene extends Phaser.Scene {
     // Regenerate forest discoveries for new season
     this.explorationSystem.generate(newSeason, this.runNumber);
 
-    if (newSeason === 'winter') {
-      // Snow on grass tiles
-      for (let y = 0; y < MAP_HEIGHT_TILES; y++) {
-        for (let x = 0; x < MAP_WIDTH_TILES; x++) {
-          const tile = this.terrainLayer.getTileAt(x, y);
-          if (tile && tile.index < 8) {
-            this.terrainLayer.putTileAt(40 + tile.index % 8, x, y);
-          }
-        }
-      }
-      // Kill non-frost-hardy crops
-      this.farmingSystem.applyFrost(0.8);
-    } else if (newSeason === 'spring') {
-      // Thaw — restore grass
-      for (let y = 0; y < MAP_HEIGHT_TILES; y++) {
-        for (let x = 0; x < MAP_WIDTH_TILES; x++) {
-          const tile = this.terrainLayer.getTileAt(x, y);
-          if (tile && tile.index >= 40 && tile.index < 48) {
-            this.terrainLayer.putTileAt(tile.index - 40, x, y);
-          }
-        }
-      }
+    // Light frost at start of autumn (kills non-hardy crops)
+    if (newSeason === 'autumn') {
+      this.farmingSystem.applyFrost(0.3);
     }
   }
 
@@ -653,19 +639,24 @@ export class GameScene extends Phaser.Scene {
     // Check weather schedule more frequently
     this.checkWeatherSchedule();
 
-    // Harvest sunset on day 12 at sunset
-    if (newPhase === 'sunset' && state.day === 12) {
+    // Harvest sunset on last day at sunset phase
+    if (newPhase === 'sunset' && state.day >= this.timeSystem['maxDays']) {
       this.time.delayedCall(3000, () => {
-        this.scene.start('SunsetScene', {
-          harvestQuality: this.farmingSystem.calculateHarvestQuality(),
-        });
+        this.startSunset();
       });
     }
   }
 
   private onRunEnd(): void {
+    this.startSunset();
+  }
+
+  private startSunset(): void {
     this.scene.start('SunsetScene', {
       harvestQuality: this.farmingSystem.calculateHarvestQuality(),
+      landHealth: this.spiritSystem.landHealth,
+      discoveryCount: this.explorationSystem.discoveryCount,
+      totalHarvested: this.farmingSystem.harvestedCount,
     });
   }
 
