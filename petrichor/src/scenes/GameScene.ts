@@ -11,35 +11,30 @@ import {
   CAMERA_BREATHE_AMPLITUDE,
   CAMERA_BREATHE_PERIOD,
   DEPTH,
-  SEASON_NAMES,
 } from '../config/constants';
 import { COLORS, TIME_PROFILES, Season } from '../config/palette';
 import { Player } from '../entities/Player';
 import { Mote } from '../entities/Mote';
-import { Crop, CROP_CATALOG, CropData } from '../entities/Crop';
+import { CROP_CATALOG, CropData } from '../entities/Crop';
 import { TimeSystem } from '../systems/TimeSystem';
+import { FarmingSystem } from '../systems/FarmingSystem';
+import { WindSystem } from '../systems/WindSystem';
 import { TouchControls } from '../ui/TouchControls';
 import { HUD } from '../ui/HUD';
 import { ParallaxManager } from '../rendering/ParallaxManager';
-import { WeatherRenderer } from '../rendering/WeatherRenderer';
+import { WeatherRenderer, WeatherType } from '../rendering/WeatherRenderer';
 import { PaletteShader } from '../rendering/PaletteShader';
 import { AmbientMixer } from '../audio/AmbientMixer';
 
-interface SoilTile {
-  tileX: number;
-  tileY: number;
-  tilled: boolean;
-  watered: boolean;
-  crop: Crop | null;
-}
-
 /**
  * Main gameplay scene.
- * Manages the farm, exploration, time cycle, weather, spirits, and Ma moments.
+ * Integrates farming, weather, wind, spirits, and the day/night cycle.
  */
 export class GameScene extends Phaser.Scene {
   // Core systems
   private timeSystem!: TimeSystem;
+  private farmingSystem!: FarmingSystem;
+  private windSystem!: WindSystem;
   private touchControls!: TouchControls;
   private hud!: HUD;
   private parallax!: ParallaxManager;
@@ -49,8 +44,6 @@ export class GameScene extends Phaser.Scene {
   // Entities
   private player!: Player;
   private motes: Mote[] = [];
-  private farmGrid: Map<string, SoilTile> = new Map();
-  private crops: Crop[] = [];
 
   // Terrain
   private terrainLayer!: Phaser.Tilemaps.TilemapLayer;
@@ -64,12 +57,19 @@ export class GameScene extends Phaser.Scene {
   // Camera
   private cameraBreathTime = 0;
 
-  // Farming state
-  private selectedSeedIndex = 0;
+  // Inventory
   private inventory: Map<string, number> = new Map();
+
+  // Weather scheduling
+  private weatherSchedule: Array<{ day: number; time: number; type: WeatherType; duration: number }> = [];
+  private activeWeatherTimer: Phaser.Time.TimerEvent | null = null;
+  private wasRainingToday = false;
 
   // Ma system
   private maActive = false;
+
+  // Interaction cooldown (prevent rapid-fire)
+  private interactCooldown = 0;
 
   constructor() {
     super({ key: 'GameScene' });
@@ -80,10 +80,11 @@ export class GameScene extends Phaser.Scene {
 
     // Initialize systems
     this.timeSystem = new TimeSystem(this);
+    this.farmingSystem = new FarmingSystem(this);
     this.ambientMixer = new AmbientMixer(this);
     this.weather = new WeatherRenderer(this);
 
-    // Sky background (rendered behind everything)
+    // Sky background
     this.skyGraphics = this.add.graphics();
     this.skyGraphics.setDepth(DEPTH.BACKGROUND);
     this.skyGraphics.setScrollFactor(0);
@@ -98,63 +99,80 @@ export class GameScene extends Phaser.Scene {
     // Place trees and objects
     this.placeEnvironment();
 
-    // Spawn motes in forested areas
+    // Wind system (needs trees ref)
+    this.windSystem = new WindSystem(this);
+    this.windSystem.setTrees(this.treeSprites);
+
+    // Spawn motes
     this.spawnMotes();
 
     // Create player at center of farm area
-    const farmCenterX = MAP_WIDTH / 2;
-    const farmCenterY = MAP_HEIGHT / 2;
-    this.player = new Player(this, farmCenterX, farmCenterY);
+    this.player = new Player(this, MAP_WIDTH / 2, MAP_HEIGHT / 2);
 
     // UI
     this.touchControls = new TouchControls(this);
     this.hud = new HUD(this);
 
-    // Camera setup
+    // Camera
     this.cameras.main.setBounds(0, 0, MAP_WIDTH, MAP_HEIGHT);
     this.cameras.main.startFollow(this.player.sprite, true, CAMERA_LERP, CAMERA_LERP);
     this.cameras.main.setRoundPixels(true);
 
-    // Set up post-processing pipeline
+    // Post-processing
     this.setupPostProcessing();
 
-    // Audio setup
+    // Audio
     this.setupAudio();
 
-    // Time system events
+    // Time events
     this.timeSystem.events.on('day-change', this.onDayChange, this);
     this.timeSystem.events.on('season-change', this.onSeasonChange, this);
     this.timeSystem.events.on('time-phase-change', this.onTimePhaseChange, this);
     this.timeSystem.events.on('run-end', this.onRunEnd, this);
 
-    // Initialize time display
-    this.hud.updateTime(this.timeSystem.state);
+    // Farming events
+    this.farmingSystem.events.on('crop-harvested', this.onCropHarvested, this);
+    this.farmingSystem.events.on('crop-withered', this.onCropWithered, this);
 
-    // Initialize seed inventory
+    // Initial state
+    this.hud.updateTime(this.timeSystem.state);
     this.inventory.set('turnip', 5);
     this.inventory.set('herb', 3);
+    this.inventory.set('wildflower', 2);
+    this.updateHudSeeds();
 
-    // Schedule weather events
-    this.scheduleWeather();
+    // Generate weather schedule for this run
+    this.generateWeatherSchedule();
   }
 
   update(time: number, delta: number): void {
-    // Update systems
+    // Systems
     this.timeSystem.update(delta);
     this.touchControls.update();
     this.hud.update();
     this.ambientMixer.update();
-    this.weather.update(delta);
+    this.weather.update(delta, time);
+
+    // Wind system
+    this.windSystem.update(
+      time,
+      this.weather.windStrength,
+      this.weather.windAngle,
+      this.farmingSystem.allCrops
+    );
+
+    // Interaction cooldown
+    if (this.interactCooldown > 0) {
+      this.interactCooldown -= delta;
+    }
 
     // Player input
     const input = this.touchControls.input;
-
     if (!this.maActive) {
       this.player.setMovement(input.moveX, input.moveY);
-
-      // Handle tap interactions
-      if (input.tapped) {
+      if (input.tapped && this.interactCooldown <= 0) {
         this.handleInteraction();
+        this.interactCooldown = 250; // ms between interactions
       }
     } else {
       this.player.setMovement(0, 0);
@@ -172,24 +190,367 @@ export class GameScene extends Phaser.Scene {
       * CAMERA_BREATHE_AMPLITUDE;
     this.cameras.main.setFollowOffset(0, breathOffset);
 
-    // Update sky gradient based on time
+    // Visuals
     this.renderSky();
-
-    // Update parallax
     this.parallax.update(this.cameras.main.scrollX, this.cameras.main.scrollY);
-
-    // Update time-of-day visual profile
     this.updateTimeVisuals();
 
-    // Update HUD
+    // HUD
     this.hud.updateTime(this.timeSystem.state);
+    const status = this.farmingSystem.getStatus();
+    this.hud.updateFarmStatus(status.needsWater, status.readyToHarvest);
 
-    // Update ambient audio based on time
+    // Audio
     this.ambientMixer.setTimeOfDay(this.timeSystem.state.timeOfDay, this.timeSystem.state.season);
   }
 
+  // --- Interaction ---
+
+  private handleInteraction(): void {
+    const tool = this.hud.currentTool;
+    const { x: tileX, y: tileY } = this.player.facingTile;
+
+    switch (tool) {
+      case 'hoe': {
+        const tile = this.farmingSystem.till(tileX, tileY);
+        if (tile) {
+          this.player.useTool('hoe');
+          // Update tilemap visual
+          this.terrainLayer.putTileAt(8, tileX, tileY);
+        }
+        break;
+      }
+
+      case 'water': {
+        const watered = this.farmingSystem.water(tileX, tileY);
+        if (watered) {
+          this.player.useTool('water');
+          this.createWaterDroplets(tileX, tileY);
+        }
+        break;
+      }
+
+      case 'seed': {
+        const tile = this.farmingSystem.getTile(tileX, tileY);
+
+        // If crop is ready, harvest it (seed tool doubles as harvest)
+        if (tile?.crop?.isReadyToHarvest) {
+          const result = this.farmingSystem.harvest(tileX, tileY);
+          if (result) {
+            this.inventory.set(
+              result.cropData.id,
+              (this.inventory.get(result.cropData.id) || 0) + result.yield_
+            );
+            this.createHarvestParticles(tileX * TILE_SIZE + 8, tileY * TILE_SIZE + 8);
+            this.player.useTool('seed');
+            this.updateHudSeeds();
+          }
+          break;
+        }
+
+        // Otherwise, plant
+        const seedData = this.hud.currentSeed;
+        if (seedData) {
+          const count = this.inventory.get(seedData.id) || 0;
+          if (count > 0) {
+            const crop = this.farmingSystem.plant(
+              tileX, tileY, seedData, this.timeSystem.state.season
+            );
+            if (crop) {
+              this.inventory.set(seedData.id, count - 1);
+              this.player.useTool('seed');
+              this.updateHudSeeds();
+            }
+          }
+        }
+        break;
+      }
+    }
+  }
+
+  private updateHudSeeds(): void {
+    const season = this.timeSystem.state.season;
+    const seasonSeeds = CROP_CATALOG.filter(c => c.seasons.includes(season));
+    this.hud.setAvailableSeeds(seasonSeeds, this.inventory);
+  }
+
+  // --- Particle effects ---
+
+  private createHarvestParticles(x: number, y: number): void {
+    const gfx = this.add.graphics();
+    gfx.setDepth(DEPTH.WEATHER_FRONT);
+
+    const particles: Array<{ x: number; y: number; vx: number; vy: number; life: number; color: number; size: number }> = [];
+    for (let i = 0; i < 16; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const speed = 0.5 + Math.random() * 2;
+      particles.push({
+        x, y,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed - 1.5,
+        life: 1,
+        color: [COLORS.GOLDEN_WHEAT, COLORS.PALE_GOLD, COLORS.SOFT_WHITE, COLORS.FRESH_GREEN][Math.floor(Math.random() * 4)],
+        size: 1 + Math.random() * 1.5,
+      });
+    }
+
+    const timer = this.time.addEvent({
+      delay: 16,
+      repeat: 45,
+      callback: () => {
+        gfx.clear();
+        for (const p of particles) {
+          p.x += p.vx;
+          p.y += p.vy;
+          p.vy += 0.04;
+          p.life -= 0.022;
+          if (p.life > 0) {
+            gfx.fillStyle(p.color, p.life * 0.9);
+            gfx.fillCircle(p.x, p.y, p.size * p.life);
+          }
+        }
+      },
+    });
+
+    this.time.delayedCall(780, () => { timer.destroy(); gfx.destroy(); });
+  }
+
+  private createWaterDroplets(tileX: number, tileY: number): void {
+    const px = tileX * TILE_SIZE + TILE_SIZE / 2;
+    const py = tileY * TILE_SIZE + TILE_SIZE / 2;
+    const gfx = this.add.graphics();
+    gfx.setDepth(DEPTH.WEATHER_FRONT);
+
+    const drops: Array<{ x: number; y: number; vx: number; vy: number; life: number }> = [];
+    for (let i = 0; i < 8; i++) {
+      const angle = -Math.PI / 2 + (Math.random() - 0.5) * 1.2;
+      const speed = 0.8 + Math.random() * 1.2;
+      drops.push({
+        x: px + (Math.random() - 0.5) * 6,
+        y: py - 2,
+        vx: Math.cos(angle) * speed * 0.5,
+        vy: Math.sin(angle) * speed,
+        life: 1,
+      });
+    }
+
+    const timer = this.time.addEvent({
+      delay: 16,
+      repeat: 25,
+      callback: () => {
+        gfx.clear();
+        for (const d of drops) {
+          d.x += d.vx;
+          d.y += d.vy;
+          d.vy += 0.06;
+          d.life -= 0.04;
+          if (d.life > 0) {
+            gfx.fillStyle(COLORS.LIGHT_SKY, d.life * 0.6);
+            gfx.fillCircle(d.x, d.y, 1);
+          }
+        }
+      },
+    });
+
+    this.time.delayedCall(440, () => { timer.destroy(); gfx.destroy(); });
+  }
+
+  // --- Weather ---
+
+  private generateWeatherSchedule(): void {
+    this.weatherSchedule = [];
+
+    // Spring: light rain on day 2 or 3
+    const springRainDay = 2 + Math.floor(Math.random() * 2);
+    this.weatherSchedule.push({
+      day: springRainDay,
+      time: 0.3 + Math.random() * 0.2, // afternoon-ish
+      type: 'rain_light',
+      duration: 50000 + Math.random() * 30000,
+    });
+
+    // Summer: potential heavy rain / storm day 6 or 7
+    const summerStormDay = 6 + Math.floor(Math.random() * 2);
+    this.weatherSchedule.push({
+      day: summerStormDay,
+      time: 0.4 + Math.random() * 0.2,
+      type: Math.random() < 0.4 ? 'storm' : 'rain_heavy',
+      duration: 40000 + Math.random() * 30000,
+    });
+
+    // Autumn: rain day 9 or 10, potential early frost day 12
+    const autumnRainDay = 9 + Math.floor(Math.random() * 2);
+    this.weatherSchedule.push({
+      day: autumnRainDay,
+      time: 0.2 + Math.random() * 0.2,
+      type: 'rain_light',
+      duration: 60000 + Math.random() * 20000,
+    });
+
+    // Late autumn frost
+    this.weatherSchedule.push({
+      day: 12,
+      time: 0.05, // dawn
+      type: 'clear', // frost is applied separately
+      duration: 0,
+    });
+
+    // Winter: snow day 14-15, fog day 13
+    this.weatherSchedule.push({
+      day: 13,
+      time: 0.1,
+      type: 'fog',
+      duration: 80000 + Math.random() * 40000,
+    });
+
+    this.weatherSchedule.push({
+      day: 14 + Math.floor(Math.random() * 2),
+      time: 0.15,
+      type: 'snow',
+      duration: 100000 + Math.random() * 50000,
+    });
+  }
+
+  private checkWeatherSchedule(): void {
+    const state = this.timeSystem.state;
+    for (const event of this.weatherSchedule) {
+      if (event.day === state.day && Math.abs(state.dayProgress - event.time) < 0.02) {
+        if (event.type !== 'clear') {
+          this.weather.setWeather(event.type);
+          this.ambientMixer.setWeather(event.type);
+          this.wasRainingToday = this.weather.isRaining;
+
+          if (event.duration > 0) {
+            if (this.activeWeatherTimer) this.activeWeatherTimer.destroy();
+            this.activeWeatherTimer = this.time.delayedCall(event.duration, () => {
+              this.weather.setWeather('clear');
+              this.ambientMixer.setWeather('clear');
+            });
+          }
+        }
+
+        // Late autumn frost trigger
+        if (event.day === 12) {
+          this.weather.setFrost(0.6);
+          this.farmingSystem.applyFrost(0.3);
+        }
+      }
+    }
+  }
+
+  // --- Time events ---
+
+  private onDayChange(): void {
+    const state = this.timeSystem.state;
+
+    // Advance farming
+    this.farmingSystem.advanceDay(state.season, this.wasRainingToday);
+    this.wasRainingToday = false;
+
+    // Update seed availability for new season
+    this.updateHudSeeds();
+
+    // Winter frost (continuous)
+    if (state.season === 'winter') {
+      this.weather.setFrost(0.4 + state.seasonDay * 0.1);
+    } else {
+      this.weather.setFrost(0);
+    }
+
+    // Drought check: if no rain for 3+ days and sunny
+    if (state.day > 3 && !this.wasRainingToday) {
+      this.farmingSystem.applyDroughtStress();
+    }
+
+    // Check weather schedule
+    this.checkWeatherSchedule();
+
+    // Grant seeds at season start (reward for continuing)
+    if (state.seasonDay === 1) {
+      this.grantSeasonalSeeds(state.season);
+    }
+  }
+
+  private onSeasonChange(newSeason: Season): void {
+    if (newSeason === 'winter') {
+      // Snow on grass tiles
+      for (let y = 0; y < MAP_HEIGHT_TILES; y++) {
+        for (let x = 0; x < MAP_WIDTH_TILES; x++) {
+          const tile = this.terrainLayer.getTileAt(x, y);
+          if (tile && tile.index < 8) {
+            this.terrainLayer.putTileAt(40 + tile.index % 8, x, y);
+          }
+        }
+      }
+      // Kill non-frost-hardy crops
+      this.farmingSystem.applyFrost(0.8);
+    } else if (newSeason === 'spring') {
+      // Thaw — restore grass
+      for (let y = 0; y < MAP_HEIGHT_TILES; y++) {
+        for (let x = 0; x < MAP_WIDTH_TILES; x++) {
+          const tile = this.terrainLayer.getTileAt(x, y);
+          if (tile && tile.index >= 40 && tile.index < 48) {
+            this.terrainLayer.putTileAt(tile.index - 40, x, y);
+          }
+        }
+      }
+    }
+  }
+
+  private onTimePhaseChange(newPhase: string): void {
+    const state = this.timeSystem.state;
+
+    // Check weather schedule more frequently
+    this.checkWeatherSchedule();
+
+    // Harvest sunset on day 12 at sunset
+    if (newPhase === 'sunset' && state.day === 12) {
+      this.time.delayedCall(3000, () => {
+        this.scene.start('SunsetScene', {
+          harvestQuality: this.farmingSystem.calculateHarvestQuality(),
+        });
+      });
+    }
+  }
+
+  private onRunEnd(): void {
+    this.scene.start('SunsetScene', {
+      harvestQuality: this.farmingSystem.calculateHarvestQuality(),
+    });
+  }
+
+  private onCropHarvested(cropData: CropData, yield_: number): void {
+    // Could trigger mote reactions, journal entries, etc.
+    if (yield_ >= 6) {
+      // Generous harvest — motes notice
+      for (const mote of this.motes) {
+        mote.show();
+      }
+    }
+  }
+
+  private onCropWithered(): void {
+    // Motes dim slightly when crops wither
+    if (this.motes.length > 2) {
+      this.motes[Math.floor(Math.random() * this.motes.length)].hide();
+    }
+  }
+
+  private grantSeasonalSeeds(season: Season): void {
+    const seasonCrops = CROP_CATALOG.filter(c => c.seasons.includes(season));
+    for (const crop of seasonCrops) {
+      const current = this.inventory.get(crop.id) || 0;
+      if (current < 2) {
+        // Grant at least 2 of each seasonal seed
+        this.inventory.set(crop.id, Math.max(current, 2));
+      }
+    }
+    this.updateHudSeeds();
+  }
+
+  // --- Terrain generation ---
+
   private generateTerrain(): void {
-    // Create tilemap from data
     this.tilemap = this.make.tilemap({
       tileWidth: TILE_SIZE,
       tileHeight: TILE_SIZE,
@@ -201,62 +562,37 @@ export class GameScene extends Phaser.Scene {
     this.terrainLayer = this.tilemap.createBlankLayer('ground', tileset, 0, 0)!;
     this.terrainLayer.setDepth(DEPTH.TERRAIN);
 
-    // Generate terrain layout
-    // Center area: farm (grass)
-    // Edges: forest floor
-    // River along one side
-    const farmStartX = 8;
-    const farmEndX = 22;
-    const farmStartY = 5;
-    const farmEndY = 15;
+    const farmStartX = 8, farmEndX = 22, farmStartY = 5, farmEndY = 15;
     const riverX = 25;
 
     for (let y = 0; y < MAP_HEIGHT_TILES; y++) {
       for (let x = 0; x < MAP_WIDTH_TILES; x++) {
-        // River
         if (x >= riverX && x <= riverX + 1) {
-          const waterFrame = 16 + (x + y) % 8; // Row 2 (water)
-          this.terrainLayer.putTileAt(waterFrame, x, y);
-          continue;
+          this.terrainLayer.putTileAt(16 + (x + y) % 8, x, y);
+        } else if (x >= farmStartX && x < farmEndX && y >= farmStartY && y < farmEndY) {
+          this.terrainLayer.putTileAt((x + y * 3) % 8, x, y);
+        } else if (y >= 9 && y <= 10 && x >= farmEndX && x < riverX) {
+          this.terrainLayer.putTileAt(24 + (x + y) % 8, x, y);
+        } else {
+          this.terrainLayer.putTileAt(32 + (x * 3 + y * 7) % 8, x, y);
         }
-
-        // Farm area
-        if (x >= farmStartX && x < farmEndX && y >= farmStartY && y < farmEndY) {
-          const grassFrame = (x + y * 3) % 8; // Row 0 (grass variants)
-          this.terrainLayer.putTileAt(grassFrame, x, y);
-          continue;
-        }
-
-        // Path from farm to river
-        if (y >= 9 && y <= 10 && x >= farmEndX && x < riverX) {
-          const pathFrame = 24 + (x + y) % 8; // Row 3 (path)
-          this.terrainLayer.putTileAt(pathFrame, x, y);
-          continue;
-        }
-
-        // Forest floor (everything else)
-        const forestFrame = 32 + (x * 3 + y * 7) % 8; // Row 4
-        this.terrainLayer.putTileAt(forestFrame, x, y);
       }
     }
   }
 
   private placeEnvironment(): void {
-    // Place trees around the forest edges
     const treePositions: Array<{ x: number; y: number; variant: number }> = [];
 
     for (let i = 0; i < 40; i++) {
       let tx: number, ty: number;
-      // Place in forested areas (outside farm area)
       do {
         tx = Math.floor(Math.random() * MAP_WIDTH_TILES);
         ty = Math.floor(Math.random() * MAP_HEIGHT_TILES);
       } while (
-        (tx >= 7 && tx < 23 && ty >= 4 && ty < 16) || // Not in farm
-        (tx >= 25) || // Not in river
-        (ty >= 9 && ty <= 10 && tx >= 22) // Not on path
+        (tx >= 7 && tx < 23 && ty >= 4 && ty < 16) ||
+        (tx >= 25) ||
+        (ty >= 9 && ty <= 10 && tx >= 22)
       );
-
       treePositions.push({
         x: tx * TILE_SIZE + TILE_SIZE / 2,
         y: ty * TILE_SIZE + TILE_SIZE,
@@ -264,7 +600,6 @@ export class GameScene extends Phaser.Scene {
       });
     }
 
-    // Sort by Y for proper layering
     treePositions.sort((a, b) => a.y - b.y);
 
     for (const tp of treePositions) {
@@ -274,23 +609,20 @@ export class GameScene extends Phaser.Scene {
       this.treeSprites.push(tree);
     }
 
-    // Place rocks, bushes, flowers, mushrooms, stumps
     for (let i = 0; i < 25; i++) {
       let ox: number, oy: number;
       do {
         ox = Math.floor(Math.random() * MAP_WIDTH_TILES);
         oy = Math.floor(Math.random() * MAP_HEIGHT_TILES);
       } while (
-        (ox >= 8 && ox < 22 && oy >= 5 && oy < 15) ||
-        (ox >= 25)
+        (ox >= 8 && ox < 22 && oy >= 5 && oy < 15) || (ox >= 25)
       );
 
       const variant = Math.floor(Math.random() * 5);
       const obj = this.add.image(
         ox * TILE_SIZE + TILE_SIZE / 2,
         oy * TILE_SIZE + TILE_SIZE,
-        'objects',
-        variant
+        'objects', variant
       );
       obj.setOrigin(0.5, 1);
       obj.setDepth(DEPTH.GROUND_DECOR + oy * TILE_SIZE);
@@ -299,208 +631,40 @@ export class GameScene extends Phaser.Scene {
   }
 
   private spawnMotes(): void {
-    // Spawn motes near trees (forested areas)
     for (let i = 0; i < 8; i++) {
-      const x = Math.random() * 7 * TILE_SIZE + TILE_SIZE; // Left forest
+      const x = Math.random() * 7 * TILE_SIZE + TILE_SIZE;
       const y = Math.random() * MAP_HEIGHT;
-      const mote = new Mote(this, x, y);
-      this.motes.push(mote);
+      this.motes.push(new Mote(this, x, y));
     }
     for (let i = 0; i < 4; i++) {
-      const x = 23 * TILE_SIZE + Math.random() * 2 * TILE_SIZE; // Right of farm, near river
+      const x = 23 * TILE_SIZE + Math.random() * 2 * TILE_SIZE;
       const y = Math.random() * MAP_HEIGHT;
-      const mote = new Mote(this, x, y);
-      this.motes.push(mote);
+      this.motes.push(new Mote(this, x, y));
     }
   }
 
-  private handleInteraction(): void {
-    const tool = this.hud.currentTool;
-    const { x: tileX, y: tileY } = this.player.facingTile;
-    const key = `${tileX},${tileY}`;
-
-    // Check bounds (farm area only for farming)
-    const inFarm = tileX >= 8 && tileX < 22 && tileY >= 5 && tileY < 15;
-    if (!inFarm) return;
-
-    switch (tool) {
-      case 'hoe': {
-        if (!this.farmGrid.has(key)) {
-          // Till the soil
-          this.farmGrid.set(key, {
-            tileX, tileY,
-            tilled: true,
-            watered: false,
-            crop: null,
-          });
-          // Update tilemap to show tilled soil
-          this.terrainLayer.putTileAt(8, tileX, tileY); // Soil tile
-          this.player.useTool('hoe');
-        }
-        break;
-      }
-      case 'water': {
-        const soil = this.farmGrid.get(key);
-        if (soil && soil.tilled) {
-          soil.watered = true;
-          this.terrainLayer.putTileAt(11, tileX, tileY); // Watered soil
-          if (soil.crop) {
-            soil.crop.water();
-          }
-          this.player.useTool('water');
-        }
-        break;
-      }
-      case 'seed': {
-        const soil = this.farmGrid.get(key);
-        if (soil && soil.tilled && !soil.crop) {
-          const availableCrops = this.getAvailableSeeds();
-          if (availableCrops.length > 0) {
-            const cropData = availableCrops[this.selectedSeedIndex % availableCrops.length];
-            const count = this.inventory.get(cropData.id) || 0;
-            if (count > 0) {
-              const crop = new Crop(this, tileX, tileY, cropData);
-              soil.crop = crop;
-              this.crops.push(crop);
-              this.inventory.set(cropData.id, count - 1);
-              this.player.useTool('seed');
-            }
-          }
-        } else if (soil?.crop?.isReadyToHarvest) {
-          // Harvest
-          const yield_ = soil.crop.harvest();
-          if (yield_ > 0) {
-            // Add to inventory and give feedback
-            const cropId = soil.crop.data.id;
-            this.inventory.set(cropId, (this.inventory.get(cropId) || 0) + yield_);
-            soil.crop.destroy();
-            soil.crop = null;
-            this.terrainLayer.putTileAt(8, tileX, tileY); // Back to tilled soil
-
-            // Harvest particle burst
-            this.createHarvestParticles(tileX * TILE_SIZE + 8, tileY * TILE_SIZE + 8);
-          }
-        }
-        break;
-      }
-    }
-
-    // Tool cycling on double-tap (handled via HUD button area)
-    this.hud.nextTool();
-  }
-
-  private getAvailableSeeds(): CropData[] {
-    const season = this.timeSystem.state.season;
-    return CROP_CATALOG.filter(c =>
-      c.seasons.includes(season) && (this.inventory.get(c.id) || 0) > 0
-    );
-  }
-
-  private createHarvestParticles(x: number, y: number): void {
-    const gfx = this.add.graphics();
-    gfx.setDepth(DEPTH.WEATHER_FRONT);
-
-    const particles: Array<{ x: number; y: number; vx: number; vy: number; life: number; color: number }> = [];
-    for (let i = 0; i < 12; i++) {
-      const angle = Math.random() * Math.PI * 2;
-      const speed = 0.5 + Math.random() * 1.5;
-      particles.push({
-        x, y,
-        vx: Math.cos(angle) * speed,
-        vy: Math.sin(angle) * speed - 1,
-        life: 1,
-        color: [COLORS.GOLDEN_WHEAT, COLORS.PALE_GOLD, COLORS.SOFT_WHITE, COLORS.FRESH_GREEN][Math.floor(Math.random() * 4)],
-      });
-    }
-
-    const timer = this.time.addEvent({
-      delay: 16,
-      repeat: 40,
-      callback: () => {
-        gfx.clear();
-        for (const p of particles) {
-          p.x += p.vx;
-          p.y += p.vy;
-          p.vy += 0.03; // gravity
-          p.life -= 0.025;
-          if (p.life > 0) {
-            gfx.fillStyle(p.color, p.life * 0.8);
-            gfx.fillCircle(p.x, p.y, 1.5 * p.life);
-          }
-        }
-      },
-    });
-
-    this.time.delayedCall(700, () => {
-      timer.destroy();
-      gfx.destroy();
-    });
-  }
+  // --- Rendering ---
 
   private setupPostProcessing(): void {
-    // Apply palette shader as post-processing if WebGL is available
     const renderer = this.renderer;
     if (renderer instanceof Phaser.Renderer.WebGL.WebGLRenderer) {
-      const pipeline = renderer.pipelines.getPostPipeline('PaletteGrade') as PaletteShader;
-      if (pipeline) {
+      if (renderer.pipelines.getPostPipeline('PaletteGrade')) {
         this.cameras.main.setPostPipeline(PaletteShader);
       }
     }
   }
 
   private setupAudio(): void {
-    // Register ambient layers
     this.ambientMixer.registerLayer('wind', 0.3);
     this.ambientMixer.registerLayer('birds', 0.25);
     this.ambientMixer.registerLayer('crickets', 0.2);
     this.ambientMixer.registerLayer('rain_light', 0.4);
     this.ambientMixer.registerLayer('rain_heavy', 0.6);
     this.ambientMixer.registerLayer('thunder', 0.5);
-
-    // Set initial time of day audio
     this.ambientMixer.setTimeOfDay(
       this.timeSystem.state.timeOfDay,
       this.timeSystem.state.season
     );
-  }
-
-  private scheduleWeather(): void {
-    // Schedule some weather events throughout the run
-    // Rain on days 3, 7, 11 (one per season except winter)
-    this.timeSystem.events.on('day-change', (state: { day: number; season: Season }) => {
-      if (state.day === 3 || state.day === 7) {
-        this.time.delayedCall(30000, () => { // rain in the afternoon
-          this.weather.setWeather('rain_light');
-          this.ambientMixer.setWeather('rain_light');
-          // Clear rain after a while
-          this.time.delayedCall(60000, () => {
-            this.weather.setWeather('clear');
-            this.ambientMixer.setWeather('clear');
-          });
-        });
-      }
-      if (state.day === 11) {
-        this.time.delayedCall(20000, () => {
-          this.weather.setWeather('rain_heavy');
-          this.ambientMixer.setWeather('rain_heavy');
-          this.time.delayedCall(45000, () => {
-            this.weather.setWeather('rain_light');
-            this.ambientMixer.setWeather('rain_light');
-            this.time.delayedCall(30000, () => {
-              this.weather.setWeather('clear');
-              this.ambientMixer.setWeather('clear');
-            });
-          });
-        });
-      }
-      if (state.day === 14) {
-        // Fog in winter
-        this.weather.setWeather('fog');
-        this.time.delayedCall(90000, () => {
-          this.weather.setWeather('clear');
-        });
-      }
-    });
   }
 
   private renderSky(): void {
@@ -510,27 +674,26 @@ export class GameScene extends Phaser.Scene {
     const topColor = profile.skyGradientTop;
     const bottomColor = profile.skyGradientBottom;
 
-    for (let y = 0; y < GAME_HEIGHT; y++) {
+    // Render in bands of 4 pixels for performance
+    for (let y = 0; y < GAME_HEIGHT; y += 2) {
       const t = y / GAME_HEIGHT;
       const r = Math.floor(((topColor >> 16) & 0xFF) * (1 - t) + ((bottomColor >> 16) & 0xFF) * t);
       const g = Math.floor(((topColor >> 8) & 0xFF) * (1 - t) + ((bottomColor >> 8) & 0xFF) * t);
       const b = Math.floor((topColor & 0xFF) * (1 - t) + (bottomColor & 0xFF) * t);
       this.skyGraphics.fillStyle((r << 16) | (g << 8) | b, 1);
-      this.skyGraphics.fillRect(0, y, GAME_WIDTH, 1);
+      this.skyGraphics.fillRect(0, y, GAME_WIDTH, 2);
     }
   }
 
   private updateTimeVisuals(): void {
     const { current, next, blend } = this.timeSystem.getBlendedProfile();
-
-    // Update post-processing shader
     const renderer = this.renderer;
+
     if (renderer instanceof Phaser.Renderer.WebGL.WebGLRenderer) {
       const pipelines = this.cameras.main.getPostPipeline(PaletteShader);
       if (pipelines) {
         const pipeline = Array.isArray(pipelines) ? pipelines[0] : pipelines;
         if (pipeline instanceof PaletteShader) {
-          // Blend between current and next profile
           const blendedProfile = {
             ...current,
             tint: {
@@ -545,65 +708,5 @@ export class GameScene extends Phaser.Scene {
         }
       }
     }
-  }
-
-  // --- Time events ---
-
-  private onDayChange(state: { day: number }): void {
-    // Advance crop growth
-    for (const soil of this.farmGrid.values()) {
-      if (soil.crop) {
-        soil.crop.advanceDay();
-      }
-      // Reset watering
-      if (soil.watered) {
-        soil.watered = false;
-        this.terrainLayer.putTileAt(8, soil.tileX, soil.tileY);
-      }
-    }
-  }
-
-  private onSeasonChange(newSeason: Season, _oldSeason: Season): void {
-    // Update terrain tiles for season
-    if (newSeason === 'winter') {
-      // Snow overlay on grass tiles
-      for (let y = 0; y < MAP_HEIGHT_TILES; y++) {
-        for (let x = 0; x < MAP_WIDTH_TILES; x++) {
-          const tile = this.terrainLayer.getTileAt(x, y);
-          if (tile && tile.index < 8) {
-            // Replace grass with snow variant
-            this.terrainLayer.putTileAt(40 + tile.index % 8, x, y);
-          }
-        }
-      }
-    }
-  }
-
-  private onTimePhaseChange(newPhase: string, _oldPhase: string): void {
-    // Check for Ma moment triggers
-    if (newPhase === 'sunset' && this.timeSystem.state.day === 12) {
-      // Harvest sunset! Transition to sunset scene
-      this.time.delayedCall(5000, () => {
-        this.scene.start('SunsetScene', {
-          harvestQuality: this.calculateHarvestQuality(),
-          timeSystem: this.timeSystem.state,
-        });
-      });
-    }
-  }
-
-  private onRunEnd(): void {
-    this.scene.start('SunsetScene', {
-      harvestQuality: this.calculateHarvestQuality(),
-      timeSystem: this.timeSystem.state,
-    });
-  }
-
-  private calculateHarvestQuality(): number {
-    // Score based on crops harvested, motes present, etc.
-    let score = 0;
-    score += this.crops.filter(c => c.isReadyToHarvest).length * 10;
-    score += this.motes.length * 5;
-    return Math.min(100, score);
   }
 }
