@@ -126,24 +126,29 @@ export class AmbientMixer {
    * Call this during boot to create audio assets without files.
    */
   static generateProceduralAudio(scene: Phaser.Scene): void {
-    const audioContext = (scene.sound as Phaser.Sound.WebAudioSoundManager).context;
-    if (!audioContext) return;
+    try {
+      const sndMgr = scene.sound;
+      if (!sndMgr || sndMgr instanceof Phaser.Sound.NoAudioSoundManager) return;
+      const ctx = (sndMgr as Phaser.Sound.WebAudioSoundManager).context;
+      if (!ctx) return;
 
-    // Generate wind noise
-    AmbientMixer.generateNoiseBuffer(scene, 'wind', 3, 'pink', 0.3);
+      // Generate ambient buffers and store as decoded audio
+      AmbientMixer.generateAndStore(ctx, scene, 'wind', 3, 'pink', 0.3);
+      AmbientMixer.generateAndStore(ctx, scene, 'rain_light', 2, 'white', 0.15);
+      AmbientMixer.generateAndStore(ctx, scene, 'rain_heavy', 2, 'white', 0.4);
+      AmbientMixer.generateCricketBuffer(scene, 'crickets', 4);
+      AmbientMixer.generateBirdBuffer(scene, 'birds', 4);
+      AmbientMixer.generateThunderBuffer(scene, 'thunder', 3);
+    } catch {
+      // Audio generation not supported — game works without audio
+    }
+  }
 
-    // Generate rain sounds
-    AmbientMixer.generateNoiseBuffer(scene, 'rain_light', 2, 'white', 0.15);
-    AmbientMixer.generateNoiseBuffer(scene, 'rain_heavy', 2, 'white', 0.4);
-
-    // Generate cricket-like chirps
-    AmbientMixer.generateCricketBuffer(scene, 'crickets', 4);
-
-    // Generate bird-like calls
-    AmbientMixer.generateBirdBuffer(scene, 'birds', 4);
-
-    // Thunder rumble
-    AmbientMixer.generateThunderBuffer(scene, 'thunder', 3);
+  private static generateAndStore(
+    ctx: AudioContext, scene: Phaser.Scene,
+    key: string, duration: number, type: 'white' | 'pink', amplitude: number
+  ): void {
+    AmbientMixer.generateNoiseBuffer(scene, key, duration, type, amplitude);
   }
 
   private static generateNoiseBuffer(
@@ -186,7 +191,8 @@ export class AmbientMixer {
       data[length - 1 - i] *= t;
     }
 
-    scene.cache.audio.add(key, { data: buffer } as unknown as HTMLAudioElement);
+    // Store the decoded AudioBuffer directly in Phaser's audio cache
+    scene.cache.audio.add(key, buffer as unknown as HTMLAudioElement);
   }
 
   private static generateCricketBuffer(scene: Phaser.Scene, key: string, duration: number): void {
@@ -209,7 +215,8 @@ export class AmbientMixer {
       data[i] = signal * (0.8 + Math.random() * 0.2);
     }
 
-    scene.cache.audio.add(key, { data: buffer } as unknown as HTMLAudioElement);
+    // Store the decoded AudioBuffer directly in Phaser's audio cache
+    scene.cache.audio.add(key, buffer as unknown as HTMLAudioElement);
   }
 
   private static generateBirdBuffer(scene: Phaser.Scene, key: string, duration: number): void {
@@ -231,7 +238,8 @@ export class AmbientMixer {
       data[i] = warble * envelope * 0.06;
     }
 
-    scene.cache.audio.add(key, { data: buffer } as unknown as HTMLAudioElement);
+    // Store the decoded AudioBuffer directly in Phaser's audio cache
+    scene.cache.audio.add(key, buffer as unknown as HTMLAudioElement);
   }
 
   private static generateThunderBuffer(scene: Phaser.Scene, key: string, duration: number): void {
@@ -251,7 +259,8 @@ export class AmbientMixer {
       data[i] = (noise * 0.5 + lowPass) * decay * 0.4;
     }
 
-    scene.cache.audio.add(key, { data: buffer } as unknown as HTMLAudioElement);
+    // Store the decoded AudioBuffer directly in Phaser's audio cache
+    scene.cache.audio.add(key, buffer as unknown as HTMLAudioElement);
   }
 
   destroy(): void {

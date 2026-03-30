@@ -202,9 +202,10 @@ export class GameScene extends Phaser.Scene {
 
     // Initial state
     this.hud.updateTime(this.timeSystem.state);
-    this.inventory.set('turnip', 5);
-    this.inventory.set('herb', 3);
-    this.inventory.set('wildflower', 2);
+    this.inventory.set('turnip', 8);
+    this.inventory.set('herb', 5);
+    this.inventory.set('wildflower', 4);
+    this.inventory.set('sugar_pea', 3);
     this.updateHudSeeds();
 
     // Generate weather schedule for this run
@@ -227,9 +228,9 @@ export class GameScene extends Phaser.Scene {
     this.tutorialBg.setDepth(DEPTH.UI + 10);
     this.tutorialBg.setScrollFactor(0);
 
-    this.tutorialText = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - 22, '', {
+    this.tutorialText = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - 24, '', {
       fontFamily: 'monospace',
-      fontSize: '6px',
+      fontSize: '8px',
       color: `#${COLORS.PARCHMENT.toString(16).padStart(6, '0')}`,
       align: 'center',
     }).setOrigin(0.5).setDepth(DEPTH.UI + 11).setScrollFactor(0).setAlpha(0);
@@ -243,7 +244,7 @@ export class GameScene extends Phaser.Scene {
 
     this.tutorialBg.clear();
     this.tutorialBg.fillStyle(COLORS.MIDNIGHT, 0.85);
-    this.tutorialBg.fillRoundedRect(20, GAME_HEIGHT - 30, GAME_WIDTH - 40, 18, 3);
+    this.tutorialBg.fillRoundedRect(10, GAME_HEIGHT - 32, GAME_WIDTH - 20, 22, 3);
 
     this.tutorialText.setText(text);
     this.tweens.add({ targets: this.tutorialText, alpha: 1, duration: 600 });

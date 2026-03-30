@@ -45,30 +45,28 @@ export class HUD {
     // Day indicator (top left)
     this.dayText = scene.add.text(4, 3, 'Day 1', {
       fontFamily: 'monospace',
-      fontSize: '8px',
+      fontSize: '10px',
       color: `#${COLORS.SOFT_WHITE.toString(16).padStart(6, '0')}`,
       shadow: textShadow,
     });
     this.container.add(this.dayText);
 
     // Season (below day)
-    this.seasonText = scene.add.text(4, 13, 'Spring', {
+    this.seasonText = scene.add.text(4, 15, 'Spring', {
       fontFamily: 'monospace',
-      fontSize: '7px',
+      fontSize: '8px',
       color: `#${COLORS.PALE_GREEN.toString(16).padStart(6, '0')}`,
       shadow: textShadow,
     });
     this.container.add(this.seasonText);
 
-    // Farm status (top center-right)
-    this.statusText = scene.add.text(GAME_WIDTH - 4, 22, '', {
+    // Farm status (below season)
+    this.statusText = scene.add.text(4, 26, '', {
       fontFamily: 'monospace',
-      fontSize: '6px',
+      fontSize: '7px',
       color: `#${COLORS.WARM_GREY.toString(16).padStart(6, '0')}`,
       shadow: textShadow,
-      align: 'right',
     });
-    this.statusText.setOrigin(1, 0);
     this.container.add(this.statusText);
 
     // Day progress bar (top center)
@@ -78,7 +76,7 @@ export class HUD {
     // Time-of-day label (above progress bar)
     this.timeLabel = scene.add.text(GAME_WIDTH / 2, 3, 'Morning', {
       fontFamily: 'monospace',
-      fontSize: '6px',
+      fontSize: '8px',
       color: `#${COLORS.PALE_GOLD.toString(16).padStart(6, '0')}`,
       shadow: textShadow,
       align: 'center',
@@ -87,9 +85,9 @@ export class HUD {
     this.container.add(this.timeLabel);
 
     // Seed info (below tools)
-    this.seedInfoText = scene.add.text(GAME_WIDTH - 4, 20, '', {
+    this.seedInfoText = scene.add.text(GAME_WIDTH - 4, 22, '', {
       fontFamily: 'monospace',
-      fontSize: '5px',
+      fontSize: '7px',
       color: `#${COLORS.PALE_GOLD.toString(16).padStart(6, '0')}`,
       shadow: textShadow,
       align: 'right',
@@ -265,9 +263,9 @@ export class HUD {
   private renderTools(): void {
     this.toolGraphics.clear();
 
-    const startX = GAME_WIDTH - 56;
-    const y = 4;
-    const size = 14;
+    const startX = GAME_WIDTH - 66;
+    const y = 3;
+    const size = 18;
     const gap = 3;
 
     for (let i = 0; i < this.tools.length; i++) {

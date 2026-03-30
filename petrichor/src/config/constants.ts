@@ -27,7 +27,7 @@ export const TOTAL_DAYS = DAYS_PER_SEASON * SEASONS_PER_RUN + WINTER_DAYS; // 13
 export const TUTORIAL_DAYS = 5; // first run is abbreviated (spring + 1 summer day)
 
 // Each in-game day lasts this many real seconds
-export const DAY_DURATION_SECONDS = 150; // 2.5 minutes per day (~30 min runs)
+export const DAY_DURATION_SECONDS = 90; // 1.5 minutes per day (~20 min runs)
 
 // Time-of-day phase durations (fraction of day)
 export const TIME_PHASE_DURATIONS: Record<string, number> = {
