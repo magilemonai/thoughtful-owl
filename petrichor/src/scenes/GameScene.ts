@@ -78,6 +78,10 @@ export class GameScene extends Phaser.Scene {
   // Interaction cooldown (prevent rapid-fire)
   private interactCooldown = 0;
 
+  // Error display for mobile debugging
+  private errorText: Phaser.GameObjects.Text | null = null;
+  private hasError = false;
+
   // Tutorial hints (run 1 only)
   private tutorialStep = 0;
   private tutorialText: Phaser.GameObjects.Text | null = null;
@@ -211,6 +215,11 @@ export class GameScene extends Phaser.Scene {
       this.setupTutorial();
     }
 
+    // Error display (visible only on crash)
+    this.errorText = this.add.text(4, GAME_HEIGHT - 12, '', {
+      fontFamily: 'monospace', fontSize: '5px', color: '#ff4444',
+      wordWrap: { width: GAME_WIDTH - 8 },
+    }).setDepth(DEPTH.UI + 100).setScrollFactor(0);
   }
 
   private setupTutorial(): void {
@@ -276,6 +285,17 @@ export class GameScene extends Phaser.Scene {
   }
 
   update(time: number, delta: number): void {
+    if (this.hasError) return; // stop retrying after crash
+    try {
+      this.updateGame(time, delta);
+    } catch (err: unknown) {
+      this.hasError = true;
+      const msg = err instanceof Error ? err.message : String(err);
+      if (this.errorText) this.errorText.setText(`ERR: ${msg}`);
+    }
+  }
+
+  private updateGame(time: number, delta: number): void {
     // Systems
     this.timeSystem.update(delta);
     this.touchControls.update();

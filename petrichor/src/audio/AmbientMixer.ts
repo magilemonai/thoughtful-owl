@@ -92,22 +92,26 @@ export class AmbientMixer {
 
       const effectiveVolume = layer.currentVolume * layer.baseVolume * this.masterVolume;
 
-      if (effectiveVolume > 0.01) {
-        if (!layer.sound) {
-          // Start playing
-          if (this.scene.cache.audio.exists(layer.key)) {
-            layer.sound = this.scene.sound.add(layer.key, {
-              loop: layer.loop,
-              volume: effectiveVolume,
-            });
-            (layer.sound as Phaser.Sound.WebAudioSound).play();
+      try {
+        if (effectiveVolume > 0.01) {
+          if (!layer.sound) {
+            if (this.scene.cache.audio.exists(layer.key)) {
+              layer.sound = this.scene.sound.add(layer.key, {
+                loop: layer.loop,
+                volume: effectiveVolume,
+              });
+              layer.sound.play();
+            }
+          } else if (layer.sound.isPlaying) {
+            (layer.sound as any).setVolume?.(effectiveVolume);
           }
-        } else {
-          (layer.sound as Phaser.Sound.WebAudioSound).setVolume(effectiveVolume);
+        } else if (layer.sound) {
+          layer.sound.stop();
+          layer.sound.destroy();
+          layer.sound = null;
         }
-      } else if (layer.sound) {
-        layer.sound.stop();
-        layer.sound.destroy();
+      } catch {
+        // Audio may fail on some mobile devices — continue silently
         layer.sound = null;
       }
     }
