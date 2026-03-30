@@ -78,10 +78,6 @@ export class GameScene extends Phaser.Scene {
   // Interaction cooldown (prevent rapid-fire)
   private interactCooldown = 0;
 
-  // Debug: error display for mobile
-  private debugText: Phaser.GameObjects.Text | null = null;
-  private frameCount = 0;
-
   // Tutorial hints (run 1 only)
   private tutorialStep = 0;
   private tutorialText: Phaser.GameObjects.Text | null = null;
@@ -158,8 +154,14 @@ export class GameScene extends Phaser.Scene {
     // Post-processing
     this.setupPostProcessing();
 
-    // Audio
+    // Audio — resume AudioContext on first touch (mobile requirement)
     this.setupAudio();
+    this.input.once('pointerdown', () => {
+      const snd = this.sound as Phaser.Sound.WebAudioSoundManager;
+      if (snd.context && snd.context.state === 'suspended') {
+        snd.context.resume();
+      }
+    });
 
     // Time events
     this.timeSystem.events.on('day-change', this.onDayChange, this);
@@ -209,12 +211,6 @@ export class GameScene extends Phaser.Scene {
       this.setupTutorial();
     }
 
-    // Debug text for mobile error visibility
-    this.debugText = this.add.text(4, GAME_HEIGHT - 10, 'frame: 0', {
-      fontFamily: 'monospace',
-      fontSize: '6px',
-      color: '#ff0000',
-    }).setDepth(DEPTH.UI + 100).setScrollFactor(0);
   }
 
   private setupTutorial(): void {
@@ -280,21 +276,6 @@ export class GameScene extends Phaser.Scene {
   }
 
   update(time: number, delta: number): void {
-    this.frameCount++;
-    try {
-      this.updateGame(time, delta);
-      if (this.debugText) {
-        this.debugText.setText(`f:${this.frameCount}`);
-      }
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message + '\n' + (err.stack?.split('\n')[1] || '') : String(err);
-      if (this.debugText) {
-        this.debugText.setText(`ERR: ${msg}`);
-      }
-    }
-  }
-
-  private updateGame(time: number, delta: number): void {
     // Systems
     this.timeSystem.update(delta);
     this.touchControls.update();

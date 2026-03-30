@@ -18,6 +18,8 @@ export class HUD {
   private statusText: Phaser.GameObjects.Text;
   private toolGraphics: Phaser.GameObjects.Graphics;
   private seedInfoText: Phaser.GameObjects.Text;
+  private progressBar: Phaser.GameObjects.Graphics;
+  private timeLabel: Phaser.GameObjects.Text;
   private selectedTool = 0;
   private selectedSeedIdx = 0;
   private availableSeeds: CropData[] = [];
@@ -69,6 +71,21 @@ export class HUD {
     this.statusText.setOrigin(1, 0);
     this.container.add(this.statusText);
 
+    // Day progress bar (top center)
+    this.progressBar = scene.add.graphics();
+    this.container.add(this.progressBar);
+
+    // Time-of-day label (above progress bar)
+    this.timeLabel = scene.add.text(GAME_WIDTH / 2, 3, 'Morning', {
+      fontFamily: 'monospace',
+      fontSize: '6px',
+      color: `#${COLORS.PALE_GOLD.toString(16).padStart(6, '0')}`,
+      shadow: textShadow,
+      align: 'center',
+    });
+    this.timeLabel.setOrigin(0.5, 0);
+    this.container.add(this.timeLabel);
+
     // Seed info (below tools)
     this.seedInfoText = scene.add.text(GAME_WIDTH - 4, 20, '', {
       fontFamily: 'monospace',
@@ -101,6 +118,36 @@ export class HUD {
       winter: COLORS.LIGHT_SKY,
     };
     this.seasonText.setColor(`#${seasonColors[state.season].toString(16).padStart(6, '0')}`);
+
+    // Time-of-day label
+    const timeLabels: Record<string, string> = {
+      dawn: 'Dawn', morning: 'Morning', afternoon: 'Afternoon',
+      goldenHour: 'Golden Hour', sunset: 'Sunset', dusk: 'Dusk',
+      night: 'Night', deepNight: 'Late Night',
+    };
+    this.timeLabel.setText(timeLabels[state.timeOfDay] || state.timeOfDay);
+
+    // Day progress bar
+    this.progressBar.clear();
+    const barW = 60;
+    const barH = 3;
+    const barX = (GAME_WIDTH - barW) / 2;
+    const barY = 12;
+
+    // Background
+    this.progressBar.fillStyle(COLORS.DARK_SLATE, 0.4);
+    this.progressBar.fillRect(barX, barY, barW, barH);
+
+    // Fill — color shifts from gold (day) to blue (night)
+    const dayColor = state.dayProgress < 0.7 ? COLORS.PALE_GOLD : COLORS.STEEL_BLUE;
+    this.progressBar.fillStyle(dayColor, 0.8);
+    this.progressBar.fillRect(barX, barY, barW * state.dayProgress, barH);
+
+    // Sun/moon dot
+    const dotX = barX + barW * state.dayProgress;
+    const dotColor = state.dayProgress < 0.7 ? COLORS.GOLDEN_WHEAT : COLORS.SOFT_WHITE;
+    this.progressBar.fillStyle(dotColor, 1);
+    this.progressBar.fillCircle(dotX, barY + 1.5, 2.5);
   }
 
   updateFarmStatus(needsWater: number, readyToHarvest: number, waterRemaining?: number): void {
@@ -189,9 +236,8 @@ export class HUD {
   private setupToolInput(): void {
     // Tool selection via tap on tool icons area
     this.scene.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
-      const scale = this.scene.scale.zoom || 1;
-      const px = pointer.x / scale;
-      const py = pointer.y / scale;
+      const px = pointer.x;
+      const py = pointer.y;
 
       const startX = GAME_WIDTH - 56;
       const toolY = 4;

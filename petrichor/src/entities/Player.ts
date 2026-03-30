@@ -5,6 +5,8 @@ import {
   PLAYER_HEIGHT,
   TILE_SIZE,
   DEPTH,
+  MAP_WIDTH,
+  MAP_HEIGHT,
 } from '../config/constants';
 import { COLORS } from '../config/palette';
 
@@ -123,6 +125,23 @@ export class Player {
 
       this.sprite.x += nx * PLAYER_SPEED * this.speedMultiplier * (delta / 1000);
       this.sprite.y += ny * PLAYER_SPEED * this.speedMultiplier * (delta / 1000);
+
+      // Clamp to world bounds
+      this.sprite.x = Math.max(TILE_SIZE, Math.min(MAP_WIDTH - TILE_SIZE, this.sprite.x));
+      this.sprite.y = Math.max(TILE_SIZE, Math.min(MAP_HEIGHT - TILE_SIZE, this.sprite.y));
+
+      // Block river (tiles 25-26)
+      const riverStartX = 25 * TILE_SIZE;
+      const riverEndX = 27 * TILE_SIZE;
+      const tileX = this.sprite.x;
+      if (tileX > riverStartX - 4 && tileX < riverEndX + 4) {
+        // Push back to nearest bank
+        if (nx > 0) {
+          this.sprite.x = riverStartX - 4;
+        } else {
+          this.sprite.x = riverEndX + 4;
+        }
+      }
 
       if (this.state !== 'walk') {
         this.state = 'walk';
