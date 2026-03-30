@@ -78,6 +78,10 @@ export class GameScene extends Phaser.Scene {
   // Interaction cooldown (prevent rapid-fire)
   private interactCooldown = 0;
 
+  // Debug: error display for mobile
+  private debugText: Phaser.GameObjects.Text | null = null;
+  private frameCount = 0;
+
   // Tutorial hints (run 1 only)
   private tutorialStep = 0;
   private tutorialText: Phaser.GameObjects.Text | null = null;
@@ -92,7 +96,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   create(): void {
-    this.cameras.main.fadeIn(1500, 0x0d, 0x0b, 0x0e);
+    // Skip camera fadeIn — causes persistent dark overlay on some mobile devices
 
     // Initialize systems
     this.timeSystem = new TimeSystem(this, this.runNumber);
@@ -204,6 +208,13 @@ export class GameScene extends Phaser.Scene {
     if (this.runNumber === 1) {
       this.setupTutorial();
     }
+
+    // Debug text for mobile error visibility
+    this.debugText = this.add.text(4, GAME_HEIGHT - 10, 'frame: 0', {
+      fontFamily: 'monospace',
+      fontSize: '6px',
+      color: '#ff0000',
+    }).setDepth(DEPTH.UI + 100).setScrollFactor(0);
   }
 
   private setupTutorial(): void {
@@ -269,6 +280,21 @@ export class GameScene extends Phaser.Scene {
   }
 
   update(time: number, delta: number): void {
+    this.frameCount++;
+    try {
+      this.updateGame(time, delta);
+      if (this.debugText) {
+        this.debugText.setText(`f:${this.frameCount}`);
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message + '\n' + (err.stack?.split('\n')[1] || '') : String(err);
+      if (this.debugText) {
+        this.debugText.setText(`ERR: ${msg}`);
+      }
+    }
+  }
+
+  private updateGame(time: number, delta: number): void {
     // Systems
     this.timeSystem.update(delta);
     this.touchControls.update();
